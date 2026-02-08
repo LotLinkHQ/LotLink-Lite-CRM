@@ -155,15 +155,7 @@ export default function LoginScreen() {
                 borderColor: "#F39C12",
               }}
             >
-              <Text style={{ color: "#F39C12", fontWeight: "600", marginBottom: 8 }}>
-                Test Credentials
-              </Text>
-              <Text style={{ color: "#2C3E50", fontSize: 14, marginBottom: 4 }}>
-                <Text style={{ fontWeight: "600" }}>Username:</Text> test123
-              </Text>
-              <Text style={{ color: "#2C3E50", fontSize: 14 }}>
-                <Text style={{ fontWeight: "600" }}>Password:</Text> test123
-              </Text>
+              {/* Test credentials removed for security - use seed script to create test accounts */}
             </View>
           </View>
 

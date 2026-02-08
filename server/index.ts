@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import rateLimit from "express-rate-limit";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { appRouter } from "./routers";
@@ -15,12 +16,24 @@ const app = express();
 const PORT = 5000;
 const EXPO_PORT = 8081;
 
+// Rate limiting for authentication endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 requests per windowMs
+  message: "Too many login attempts, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use(cors({
   origin: true,
   credentials: true,
 }));
 app.use(cookieParser());
 app.use(express.json());
+
+// Apply rate limiting to tRPC endpoints (includes auth)
+app.use("/api/trpc", authLimiter);
 
 app.use(
   "/api/trpc",

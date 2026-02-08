@@ -37,7 +37,7 @@ export const appRouter = router({
 
         ctx.res.cookie("dealership_session", sessionToken, {
           httpOnly: true,
-          secure: false,
+          secure: process.env.NODE_ENV === "production", // HTTPS only in production
           sameSite: "lax",
           maxAge: 30 * 24 * 60 * 60 * 1000,
           path: "/",
