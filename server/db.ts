@@ -30,13 +30,23 @@ export function getDb() {
   return _db!;
 }
 
-export async function getUserLeads(dealershipId: number) {
+export async function getUserLeads(dealershipId: number, cursor?: number, limit: number = 50) {
   const db = getDb();
-  return db
+  let query = db
     .select()
     .from(leads)
     .where(eq(leads.dealershipId, dealershipId))
-    .orderBy(desc(leads.createdAt));
+    .orderBy(desc(leads.createdAt))
+    .limit(limit + 1);
+
+  if (cursor) {
+    query = query.where(and(
+      eq(leads.dealershipId, dealershipId),
+      eq(leads.id, cursor)
+    ));
+  }
+
+  return query;
 }
 
 export async function getLeadById(id: number) {
@@ -75,13 +85,23 @@ export async function searchLeads(dealershipId: number, query: string) {
     .orderBy(desc(leads.createdAt));
 }
 
-export async function getUserInventory(dealershipId: number) {
+export async function getUserInventory(dealershipId: number, cursor?: number, limit: number = 50) {
   const db = getDb();
-  return db
+  let query = db
     .select()
     .from(inventory)
     .where(eq(inventory.dealershipId, dealershipId))
-    .orderBy(desc(inventory.arrivalDate));
+    .orderBy(desc(inventory.arrivalDate))
+    .limit(limit + 1);
+
+  if (cursor) {
+    query = query.where(and(
+      eq(inventory.dealershipId, dealershipId),
+      eq(inventory.id, cursor)
+    ));
+  }
+
+  return query;
 }
 
 export async function getInventoryById(id: number) {
@@ -112,6 +132,20 @@ export async function getMatchesByLeadId(leadId: number) {
     .select()
     .from(matches)
     .where(eq(matches.leadId, leadId))
+    .orderBy(desc(matches.createdAt));
+}
+
+export async function getMatchesByLeadIds(leadIds: number[]) {
+  const db = getDb();
+  if (leadIds.length === 0) return [];
+  return db
+    .select()
+    .from(matches)
+    .where(
+      and(
+        ...leadIds.map(id => eq(matches.leadId, id))
+      )
+    )
     .orderBy(desc(matches.createdAt));
 }
 

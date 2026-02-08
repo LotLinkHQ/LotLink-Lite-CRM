@@ -5,6 +5,30 @@
     "version": "1.0.0",
     "scheme": "rv-sales-crm",
     "userInterfaceStyle": "light",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B5E7E"
+    },
+    "ios": {
+      "bundleIdentifier": "com.lotlink.rvsalescrm",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to scan VIN barcodes for quick inventory entry."
+      }
+    },
+    "android": {
+      "package": "com.lotlink.rvsalescrm",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0B5E7E"
+      },
+      "permissions": [
+        "CAMERA"
+      ]
+    },
     "web": {
       "bundler": "metro",
       "output": "single",
@@ -15,6 +39,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id-here"
+      }
     }
   }
 }

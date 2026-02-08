@@ -172,6 +172,19 @@ export async function runMatchingForNewInventory(
 
   console.log(`[Matching] Sensitivity: ${sensitivity}, Threshold: ${threshold}, SMS enabled: ${smsEnabled}`);
 
+  // PERFORMANCE FIX: Batch fetch all existing matches to avoid N+1 query problem
+  const leadIds = activeLeads.map(lead => lead.id);
+  const allExistingMatches = await db.getMatchesByLeadIds(leadIds);
+
+  // Create a lookup map for O(1) access
+  const matchesByLeadId = new Map<number, any[]>();
+  for (const match of allExistingMatches) {
+    if (!matchesByLeadId.has(match.leadId)) {
+      matchesByLeadId.set(match.leadId, []);
+    }
+    matchesByLeadId.get(match.leadId)!.push(match);
+  }
+
   const results: any[] = [];
   let notificationsSent = 0;
 
@@ -181,7 +194,8 @@ export async function runMatchingForNewInventory(
     if (matchResult.score >= threshold) {
       console.log(`[Matching] Match found! Lead "${lead.customerName}" (score: ${matchResult.score})`);
 
-      const existingMatches = await db.getMatchesByLeadId(lead.id);
+      // Use pre-fetched matches from the lookup map
+      const existingMatches = matchesByLeadId.get(lead.id) || [];
       const alreadyMatched = existingMatches.some(
         (m: any) => m.inventoryId === inventoryId && m.status !== "dismissed"
       );
@@ -361,14 +375,28 @@ export async function runMatchingForAllInventory(dealershipId: number) {
   const allInventory = await db.getUserInventory(dealershipId);
   const inStockUnits = allInventory.filter((u: any) => u.status === "in_stock");
 
+  console.log(`[Matching] Starting parallel scan of ${inStockUnits.length} units`);
+
+  // PERFORMANCE FIX: Process units in parallel with concurrency limiting
+  const CONCURRENCY_LIMIT = 10;
   let totalMatches = 0;
   let totalNotifications = 0;
 
-  for (const unit of inStockUnits) {
-    const result = await runMatchingForNewInventory(unit.id, dealershipId);
-    totalMatches += result.matchesFound;
-    totalNotifications += result.notificationsSent;
+  // Process in batches to avoid overwhelming the database
+  for (let i = 0; i < inStockUnits.length; i += CONCURRENCY_LIMIT) {
+    const batch = inStockUnits.slice(i, i + CONCURRENCY_LIMIT);
+    const results = await Promise.all(
+      batch.map(unit => runMatchingForNewInventory(unit.id, dealershipId))
+    );
+
+    for (const result of results) {
+      totalMatches += result.matchesFound;
+      totalNotifications += result.notificationsSent;
+    }
+
+    console.log(`[Matching] Processed ${Math.min(i + CONCURRENCY_LIMIT, inStockUnits.length)}/${inStockUnits.length} units`);
   }
 
+  console.log(`[Matching] Parallel scan complete: ${totalMatches} matches, ${totalNotifications} notifications`);
   return { totalMatches, totalNotifications, unitsScanned: inStockUnits.length };
 }
