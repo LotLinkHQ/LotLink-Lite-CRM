@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RV Notifications Sign-Up</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .header {
+      background: linear-gradient(135deg, #0d4f6b, #1a7a9b);
+      width: 100%;
+      padding: 32px 20px;
+      text-align: center;
+      color: white;
+    }
+    .header h1 { font-size: 28px; margin-bottom: 8px; }
+    .header p { font-size: 16px; opacity: 0.9; max-width: 600px; margin: 0 auto; }
+    .container {
+      max-width: 560px;
+      width: 100%;
+      padding: 20px;
+      margin-top: -20px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+    .card h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: #0d4f6b;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 8px;
+    }
+    .form-group { margin-bottom: 16px; }
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #2d3748;
+    }
+    label .required { color: #e53e3e; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e0;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #1a7a9b;
+      box-shadow: 0 0 0 3px rgba(26,122,155,0.15);
+    }
+    textarea { resize: vertical; min-height: 60px; }
+    .row { display: flex; gap: 12px; }
+    .row .form-group { flex: 1; }
+    .consent-box {
+      background: #fffbeb;
+      border: 1px solid #f6e05e;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 8px;
+    }
+    .consent-box label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-weight: 400;
+      font-size: 13px;
+      color: #4a5568;
+      cursor: pointer;
+      line-height: 1.5;
+    }
+    .consent-box input[type="checkbox"] {
+      width: 20px;
+      min-width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      cursor: pointer;
+    }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #0d4f6b, #1a7a9b);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: 8px;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .success {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .success .checkmark {
+      width: 64px;
+      height: 64px;
+      background: #38a169;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 32px;
+      color: white;
+    }
+    .success h2 { color: #38a169; margin-bottom: 8px; font-size: 22px; }
+    .success p { color: #4a5568; font-size: 15px; line-height: 1.6; }
+    .error-msg {
+      display: none;
+      background: #fed7d7;
+      color: #c53030;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: #a0aec0;
+      margin-top: auto;
+    }
+    .info-text {
+      font-size: 13px;
+      color: #718096;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Get Notified When Your Dream RV Arrives</h1>
+    <p>Tell us what you're looking for and we'll text you the moment a matching RV hits our lot. Never miss the perfect unit!</p>
+  </div>
+
+  <div class="container">
+    <div id="formSection">
+      <div class="card">
+        <h2>Your Information</h2>
+        <div id="errorMsg" class="error-msg"></div>
+        <form id="optInForm">
+          <div class="form-group">
+            <label>Full Name <span class="required">*</span></label>
+            <input type="text" id="name" required placeholder="John Smith">
+          </div>
+          <div class="form-group">
+            <label>Cell Phone Number <span class="required">*</span></label>
+            <input type="tel" id="phone" required placeholder="253-308-5417">
+            <p class="info-text">We'll text this number when a match is found</p>
+          </div>
+          <div class="form-group">
+            <label>Email (optional)</label>
+            <input type="email" id="email" placeholder="john@example.com">
+          </div>
+      </div>
+
+      <div class="card">
+        <h2>What Are You Looking For?</h2>
+          <div class="form-group">
+            <label>Preferred Make / Brand</label>
+            <input type="text" id="make" placeholder="e.g. Forest River, Airstream, Thor">
+          </div>
+          <div class="form-group">
+            <label>Preferred Model</label>
+            <input type="text" id="model" placeholder="e.g. Georgetown 36B7, Interstate 24GT">
+          </div>
+          <div class="row">
+            <div class="form-group">
+              <label>Preferred Year</label>
+              <input type="number" id="year" placeholder="2025" min="2000" max="2030">
+            </div>
+            <div class="form-group">
+              <label>Max Budget</label>
+              <input type="text" id="budget" placeholder="$200,000">
+            </div>
+          </div>
+          <div class="row">
+            <div class="form-group">
+              <label>Bed Type</label>
+              <select id="bedType">
+                <option value="">No preference</option>
+                <option value="King">King</option>
+                <option value="Queen">Queen</option>
+                <option value="Twin">Twin</option>
+                <option value="Bunk">Bunk</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Minimum Length (ft)</label>
+              <input type="number" id="minLength" placeholder="30" min="10" max="50">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Anything Else We Should Know?</label>
+            <textarea id="notes" placeholder="e.g. Need outdoor kitchen, looking for Class A, must have 2+ slide-outs..."></textarea>
+          </div>
+      </div>
+
+      <div class="card">
+        <h2>SMS Consent</h2>
+        <div class="consent-box">
+          <label>
+            <input type="checkbox" id="consent" required>
+            <span>I agree to receive automated text message notifications from the dealership about RV inventory that matches my preferences. Message frequency varies. Message and data rates may apply. Reply STOP at any time to unsubscribe. Reply HELP for help.</span>
+          </label>
+        </div>
+        <button type="submit" class="btn" id="submitBtn">Sign Me Up for Notifications</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="successSection" class="success card">
+      <div class="checkmark">&#10003;</div>
+      <h2>You're All Set!</h2>
+      <p>We've saved your preferences. You'll receive a text message at <strong id="confirmedPhone"></strong> whenever a matching RV arrives on our lot.</p>
+      <p style="margin-top: 12px;">Reply STOP to any message to unsubscribe at any time.</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Powered by RV Sales CRM &bull; Message and data rates may apply &bull; Reply STOP to unsubscribe</p>
+  </div>
+
+  <script>
+    document.getElementById('optInForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const errorMsg = document.getElementById('errorMsg');
+      errorMsg.style.display = 'none';
+
+      if (!document.getElementById('consent').checked) {
+        errorMsg.textContent = 'Please check the SMS consent box to continue.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      const phone = document.getElementById('phone').value.trim();
+      if (!phone || phone.replace(/\D/g, '').length < 10) {
+        errorMsg.textContent = 'Please enter a valid 10-digit phone number.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      const budgetRaw = document.getElementById('budget').value.replace(/[^0-9.]/g, '');
+
+      const data = {
+        customerName: document.getElementById('name').value.trim(),
+        customerPhone: phone,
+        customerEmail: document.getElementById('email').value.trim() || null,
+        preferredMake: document.getElementById('make').value.trim() || null,
+        preferredModel: document.getElementById('model').value.trim() || null,
+        preferredYear: document.getElementById('year').value ? parseInt(document.getElementById('year').value) : null,
+        maxBudget: budgetRaw || null,
+        bedType: document.getElementById('bedType').value || null,
+        minLength: document.getElementById('minLength').value || null,
+        notes: document.getElementById('notes').value.trim() || null,
+        smsConsent: true,
+        consentTimestamp: new Date().toISOString(),
+      };
+
+      try {
+        const res = await fetch('/api/opt-in', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json();
+
+        if (result.success) {
+          document.getElementById('formSection').style.display = 'none';
+          document.getElementById('confirmedPhone').textContent = phone;
+          document.getElementById('successSection').style.display = 'block';
+          window.scrollTo(0, 0);
+        } else {
+          errorMsg.textContent = result.error || 'Something went wrong. Please try again.';
+          errorMsg.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Sign Me Up for Notifications';
+        }
+      } catch (err) {
+        errorMsg.textContent = 'Network error. Please check your connection and try again.';
+        errorMsg.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Sign Me Up for Notifications';
+      }
+    });
+  </script>
+</body>
+</html>

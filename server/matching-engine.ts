@@ -1,0 +1,374 @@
+import * as db from "./db";
+import { sendSMS } from "./twilio";
+import { sendEmail } from "./sendgrid";
+
+interface MatchResult {
+  leadId: number;
+  score: number;
+  reasons: string[];
+}
+
+function normalizeString(s: string | null | undefined): string {
+  return (s || "").toLowerCase().trim();
+}
+
+function scoreLeadAgainstUnit(lead: any, unit: any): MatchResult {
+  const reasons: string[] = [];
+  let score = 0;
+
+  const leadModel = normalizeString(lead.preferredModel);
+  const unitModel = normalizeString(unit.model);
+  const unitMake = normalizeString(unit.make);
+  const unitFull = `${unitMake} ${unitModel}`;
+
+  if (leadModel && unitModel) {
+    const leadWords = leadModel.split(/\s+/).filter(Boolean);
+    const unitWords = unitFull.split(/\s+/).filter(Boolean);
+
+    let wordMatches = 0;
+    for (const lw of leadWords) {
+      for (const uw of unitWords) {
+        if (uw.includes(lw) || lw.includes(uw)) {
+          wordMatches++;
+          break;
+        }
+      }
+    }
+
+    if (wordMatches > 0) {
+      const matchRatio = wordMatches / leadWords.length;
+      if (matchRatio >= 0.8) {
+        score += 50;
+        reasons.push(`Strong model match: "${lead.preferredModel}" matches "${unit.make} ${unit.model}"`);
+      } else if (matchRatio >= 0.5) {
+        score += 35;
+        reasons.push(`Partial model match: "${lead.preferredModel}" partially matches "${unit.make} ${unit.model}"`);
+      } else if (matchRatio > 0) {
+        score += 20;
+        reasons.push(`Keyword overlap: "${lead.preferredModel}" has common terms with "${unit.make} ${unit.model}"`);
+      }
+    }
+
+    if (leadModel === unitModel || leadModel === unitFull) {
+      score += 15;
+      reasons.push("Exact model name match");
+    }
+  }
+
+  if (lead.preferredYear && unit.year) {
+    const yearDiff = Math.abs(lead.preferredYear - unit.year);
+    if (yearDiff === 0) {
+      score += 20;
+      reasons.push(`Exact year match: ${unit.year}`);
+    } else if (yearDiff <= 1) {
+      score += 12;
+      reasons.push(`Close year match: wanted ${lead.preferredYear}, unit is ${unit.year}`);
+    } else if (yearDiff <= 3) {
+      score += 5;
+      reasons.push(`Year within range: wanted ${lead.preferredYear}, unit is ${unit.year}`);
+    }
+  }
+
+  const prefs = lead.preferences as any;
+  if (prefs && typeof prefs === "object") {
+    if (prefs.maxPrice && unit.price) {
+      const maxPrice = parseFloat(prefs.maxPrice);
+      const unitPrice = parseFloat(unit.price);
+      if (!isNaN(maxPrice) && !isNaN(unitPrice)) {
+        if (unitPrice <= maxPrice) {
+          score += 10;
+          reasons.push(`Within budget: $${unitPrice.toLocaleString()} <= $${maxPrice.toLocaleString()}`);
+        } else if (unitPrice <= maxPrice * 1.1) {
+          score += 5;
+          reasons.push(`Slightly over budget: $${unitPrice.toLocaleString()} (budget $${maxPrice.toLocaleString()})`);
+        }
+      }
+    }
+
+    if (prefs.minLength && unit.length) {
+      const minLen = parseFloat(prefs.minLength);
+      const unitLen = parseFloat(unit.length);
+      if (!isNaN(minLen) && !isNaN(unitLen) && unitLen >= minLen) {
+        score += 5;
+        reasons.push(`Meets length requirement: ${unitLen}ft >= ${minLen}ft`);
+      }
+    }
+
+    if (prefs.bedType && unit.bedType) {
+      if (normalizeString(prefs.bedType) === normalizeString(unit.bedType)) {
+        score += 5;
+        reasons.push(`Bed type match: ${unit.bedType}`);
+      }
+    }
+
+    if (prefs.make && unit.make) {
+      if (normalizeString(prefs.make) === normalizeString(unit.make)) {
+        score += 10;
+        reasons.push(`Make/brand match: ${unit.make}`);
+      }
+    }
+  }
+
+  if (lead.notes) {
+    const notesLower = normalizeString(lead.notes);
+    const unitTerms = [unitMake, unitModel, ...unitFull.split(/\s+/)].filter(Boolean);
+    for (const term of unitTerms) {
+      if (term.length > 2 && notesLower.includes(term)) {
+        score += 3;
+        reasons.push(`Notes mention "${term}"`);
+        break;
+      }
+    }
+  }
+
+  return { leadId: lead.id, score, reasons };
+}
+
+function getMatchThreshold(sensitivity: string): number {
+  switch (sensitivity) {
+    case "strict":
+      return 50;
+    case "moderate":
+      return 30;
+    case "loose":
+      return 15;
+    default:
+      return 30;
+  }
+}
+
+function buildNotificationMessage(lead: any, unit: any, score: number, reasons: string[]): string {
+  const unitName = `${unit.year} ${unit.make} ${unit.model}`;
+  const priceStr = unit.price ? ` - $${parseFloat(unit.price).toLocaleString()}` : "";
+  const locationStr = unit.storeLocation ? ` at ${unit.storeLocation}` : "";
+
+  return (
+    `Hi ${lead.customerName}! Great news from your dealership! ` +
+    `A ${unitName}${priceStr} just arrived${locationStr}. ` +
+    `Based on your preferences, we think this could be a great fit for you. ` +
+    `Reply or call us to schedule a viewing. We'd love to help you find your perfect RV!`
+  );
+}
+
+export async function runMatchingForNewInventory(
+  inventoryId: number,
+  dealershipId: number
+): Promise<{ matchesFound: number; notificationsSent: number; results: any[] }> {
+  console.log(`[Matching] Starting match scan for inventory #${inventoryId}, dealership #${dealershipId}`);
+
+  const unit = await db.getInventoryById(inventoryId);
+  if (!unit) {
+    console.log(`[Matching] Unit #${inventoryId} not found`);
+    return { matchesFound: 0, notificationsSent: 0, results: [] };
+  }
+
+  const activeLeads = await db.getAllDealershipLeads(dealershipId);
+  console.log(`[Matching] Scanning ${activeLeads.length} active leads against ${unit.year} ${unit.make} ${unit.model}`);
+
+  const prefs = await db.getDealershipPreferences(dealershipId);
+  const sensitivity = prefs?.matchingSensitivity || "moderate";
+  const threshold = getMatchThreshold(sensitivity);
+  const smsEnabled = prefs?.smsNotifications !== false;
+
+  console.log(`[Matching] Sensitivity: ${sensitivity}, Threshold: ${threshold}, SMS enabled: ${smsEnabled}`);
+
+  const results: any[] = [];
+  let notificationsSent = 0;
+
+  for (const lead of activeLeads) {
+    const matchResult = scoreLeadAgainstUnit(lead, unit);
+
+    if (matchResult.score >= threshold) {
+      console.log(`[Matching] Match found! Lead "${lead.customerName}" (score: ${matchResult.score})`);
+
+      const existingMatches = await db.getMatchesByLeadId(lead.id);
+      const alreadyMatched = existingMatches.some(
+        (m: any) => m.inventoryId === inventoryId && m.status !== "dismissed"
+      );
+
+      if (alreadyMatched) {
+        console.log(`[Matching] Lead "${lead.customerName}" already matched to this unit, skipping`);
+        continue;
+      }
+
+      const match = await db.createMatch({
+        leadId: lead.id,
+        inventoryId: inventoryId,
+        matchScore: matchResult.score,
+        matchReason: matchResult.reasons.join("; "),
+        status: "pending",
+      });
+
+      await db.createMatchHistory({
+        leadId: lead.id,
+        inventoryId: inventoryId,
+        matchId: match.id,
+        matchScore: matchResult.score,
+        matchReason: matchResult.reasons.join("; "),
+        status: "matched",
+      });
+
+      let smsSent = false;
+      let emailSent = false;
+      let smsError: string | undefined;
+      let emailError: string | undefined;
+      const emailEnabled = prefs?.emailNotifications !== false;
+
+      if (emailEnabled && lead.customerEmail) {
+        const emailResult = await sendEmail(
+          lead.customerEmail,
+          lead,
+          unit,
+          matchResult.score,
+          matchResult.reasons
+        );
+        if (emailResult.success) {
+          emailSent = true;
+          notificationsSent++;
+          console.log(`[Matching] Email sent to ${lead.customerName} at ${lead.customerEmail}`);
+
+          await db.updateMatch(match.id, {
+            status: "notified",
+            notificationSentAt: new Date(),
+            notificationMethod: "email",
+          });
+
+          await db.updateLead(lead.id, { status: "matched" });
+        } else {
+          emailError = emailResult.error;
+          console.log(`[Matching] Email failed for ${lead.customerName}: ${emailError}`);
+        }
+      }
+
+      if (smsEnabled && lead.customerPhone) {
+        const message = buildNotificationMessage(lead, unit, matchResult.score, matchResult.reasons);
+        const smsResult = await sendSMS(lead.customerPhone, message);
+
+        if (smsResult.success) {
+          smsSent = true;
+          if (!emailSent) notificationsSent++;
+          console.log(`[Matching] SMS sent to ${lead.customerName} at ${lead.customerPhone}`);
+
+          if (!emailSent) {
+            await db.updateMatch(match.id, {
+              status: "notified",
+              notificationSentAt: new Date(),
+              notificationMethod: "sms",
+            });
+            await db.updateLead(lead.id, { status: "matched" });
+          }
+        } else {
+          smsError = smsResult.error;
+          console.log(`[Matching] SMS failed for ${lead.customerName}: ${smsError}`);
+        }
+      }
+
+      if (!lead.customerPhone && !lead.customerEmail) {
+        console.log(`[Matching] No contact info for ${lead.customerName}, match created but no notification sent`);
+      }
+
+      results.push({
+        matchId: match.id,
+        leadId: lead.id,
+        customerName: lead.customerName,
+        customerPhone: lead.customerPhone,
+        customerEmail: lead.customerEmail,
+        score: matchResult.score,
+        reasons: matchResult.reasons,
+        smsSent,
+        emailSent,
+        smsError,
+        emailError,
+      });
+    }
+  }
+
+  if (results.length > 0) {
+    await db.updateInventory(inventoryId, { status: "matched" });
+  }
+
+  console.log(
+    `[Matching] Complete. ${results.length} matches found, ${notificationsSent} notifications sent (email + SMS)`
+  );
+
+  return { matchesFound: results.length, notificationsSent, results };
+}
+
+export async function retryPendingNotifications(dealershipId: number) {
+  console.log(`[Matching] Retrying pending notifications for dealership #${dealershipId}`);
+
+  const allMatches = await db.getAllDealershipMatches(dealershipId);
+  const pendingMatches = allMatches.filter(
+    (m: any) => m.match?.status === "pending" && !m.match?.notificationSentAt
+  );
+
+  console.log(`[Matching] Found ${pendingMatches.length} pending matches to retry`);
+
+  const prefs = await db.getDealershipPreferences(dealershipId);
+  const emailEnabled = prefs?.emailNotifications !== false;
+  const smsEnabled = prefs?.smsNotifications !== false;
+
+  let sent = 0;
+  for (const entry of pendingMatches) {
+    const lead = entry.lead;
+    const unit = entry.unit;
+    const matchRecord = entry.match;
+
+    if (!lead || !unit) continue;
+    if (!lead.customerPhone && !lead.customerEmail) continue;
+    if (lead.dealershipId !== dealershipId) continue;
+
+    let notified = false;
+    const reasons = [matchRecord.matchReason || ""];
+
+    if (emailEnabled && lead.customerEmail) {
+      const emailResult = await sendEmail(lead.customerEmail, lead, unit, matchRecord.matchScore, reasons);
+      if (emailResult.success) {
+        notified = true;
+        console.log(`[Matching] Retry email sent to ${lead.customerName}`);
+      }
+    }
+
+    if (smsEnabled && lead.customerPhone) {
+      const message = buildNotificationMessage(lead, unit, matchRecord.matchScore, reasons);
+      const smsResult = await sendSMS(lead.customerPhone, message);
+      if (smsResult.success) {
+        notified = true;
+        console.log(`[Matching] Retry SMS sent to ${lead.customerName}`);
+      }
+    }
+
+    if (notified) {
+      sent++;
+      let method: "email" | "sms" = "sms";
+      if (emailEnabled && lead.customerEmail) {
+        method = "email";
+      }
+      await db.updateMatch(matchRecord.id, {
+        status: "notified",
+        notificationSentAt: new Date(),
+        notificationMethod: method,
+      });
+      await db.updateLead(lead.id, { status: "matched" });
+    }
+  }
+
+  console.log(`[Matching] Retry complete. ${sent}/${pendingMatches.length} notifications sent`);
+  return { retried: pendingMatches.length, sent };
+}
+
+export async function runMatchingForAllInventory(dealershipId: number) {
+  const allInventory = await db.getUserInventory(dealershipId);
+  const inStockUnits = allInventory.filter((u: any) => u.status === "in_stock");
+
+  let totalMatches = 0;
+  let totalNotifications = 0;
+
+  for (const unit of inStockUnits) {
+    const result = await runMatchingForNewInventory(unit.id, dealershipId);
+    totalMatches += result.matchesFound;
+    totalNotifications += result.notificationsSent;
+  }
+
+  return { totalMatches, totalNotifications, unitsScanned: inStockUnits.length };
+}

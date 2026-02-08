@@ -1,0 +1,236 @@
+aIXC6V0V7iwmGYEFFxp1jF_1770359717605_na1fn_ZGVzaWdu.md
+
+RV Sales CRM Mobile App - Design Document
+Overview
+The RV Sales CRM is a specialized mobile application built for RV dealership sales teams to track incoming inventory and intelligently match units with waiting customers. The system automates the process of notifying salespeople when a customer's desired RV arrives at the dealership.
+Core Problem Solved
+When a customer walks into an RV dealership and doesn't find their ideal unit in stock, the salesperson needs a way to:
+Capture detailed customer preferences (specific models, features, dimensions, amenities)
+Track incoming RV inventory as units arrive at the dealership
+Automatically match incoming units with waiting customers based on preferences
+Notify the sales team when a match is found so they can contact the customer
+Screen List
+1. Home / Dashboard Screen
+Overview of key metrics (leads waiting, units arriving, matches today)
+Quick access to main features
+Recent activity feed
+2. Leads Management Screen
+List of all customer leads with their preferences
+Search and filter by customer name, preferences, date added
+Add new lead button
+Lead detail view with full preference information
+3. Add/Edit Lead Screen
+Customer name and contact information (email, phone)
+Preference selection:
+Option A: Specific RV model search (e.g., "2025 Tiffin Allegro Bus 45OPP")
+Option B: Feature-based filters:
+Bed type (king, queen, bunk, etc.)
+Amenities (fireplace, washer/dryer, generator, etc.)
+Length range (e.g., 35-37 ft)
+Bathroom count (1, 1.5, 2, etc.)
+Price range
+Slide-out count
+Fuel type
+Save/Update lead
+4. Inventory Tracking Screen
+List of incoming RV units
+Add new unit arrival
+Unit details: Model, year, length, bed type, amenities, price, location/store
+Status: In stock, matched, sold, pending match
+Search and filter by model, features, date arrived
+5. Add/Edit Inventory Screen
+Unit information entry:
+Year, make, model
+VIN/Unit ID
+Length, weight
+Bed configuration
+Amenities checklist
+Price
+Store location (which of the 4 stores)
+Arrival date
+Save unit
+6. Matches / Notifications Screen
+Real-time list of matched units with waiting customers
+Shows: Unit details, matching customer(s), match confidence/score
+Action buttons: "Contact Customer", "Mark as Sold", "Dismiss Match"
+Filter: Today's matches, pending, completed
+7. Customer Detail Screen
+Full customer profile with preferences
+Contact information
+History of interactions
+Linked units (current matches, previously matched units)
+Edit/delete customer option
+8. Unit Detail Screen
+Complete unit specifications
+Photos/images of unit (future enhancement)
+Matching customers (who is waiting for this unit)
+Status history
+Mark as sold/available
+9. Settings Screen
+User profile (salesperson info)
+Store location selection
+Notification preferences (email, SMS, in-app)
+AI matching sensitivity (strict vs. loose matching)
+App preferences (dark mode, etc.)
+Primary Content and Functionality
+Leads Management
+Create Lead: Capture customer preferences during dealership visit
+View Leads: Browse all waiting customers
+Edit Lead: Update customer preferences if they change their mind
+Delete Lead: Remove customer from waitlist
+Search/Filter: Find leads by name, preferences, or date added
+Inventory Tracking
+Log Unit Arrival: Record new RV units as they arrive
+View Inventory: See all units in stock
+Edit Unit: Update unit information if details change
+Mark as Sold: Remove sold units from inventory
+Search/Filter: Find units by model, features, or store
+AI Matching System
+Automatic Matching: When a new unit arrives, AI compares it against all waiting leads
+Match Scoring: Calculates confidence score based on preference match
+Notification: Alerts sales team of matches via:
+In-app notification
+Email notification (optional)
+SMS notification (optional)
+Match History: Track which customers were notified about which units
+Notifications & Alerts
+Match Alert: "New Match! 2025 Tiffin Allegro Bus 45OPP arrived - 3 customers waiting"
+Action Required: Sales team can view matched customers and contact them
+Completion Tracking: Mark when customer is contacted, unit is sold, or match is dismissed
+Key User Flows
+Flow 1: New Customer Arrives (Lead Creation)
+Salesperson meets customer in dealership
+Opens app → Leads screen → "Add New Lead"
+Enters customer name, email, phone
+Selects preferences:
+Either specific model OR feature filters
+Saves lead
+Lead is now in the system waiting for matches
+Flow 2: New Unit Arrives (Inventory Entry)
+Unit arrives at dealership
+Salesperson opens app → Inventory screen → "Add Unit"
+Scans VIN or enters unit details
+Fills in specifications (model, length, amenities, price, store)
+Saves unit
+AI automatically matches against all waiting leads
+Sales team receives notification if matches found
+Flow 3: Match Notification (Sales Team Action)
+Sales team receives notification: "2025 Tiffin Allegro Bus 45OPP matched with 3 customers"
+Opens app → Matches screen
+Views matched customers and their details
+Clicks "Contact Customer" → Opens phone/email
+After contacting customer:
+Mark as "Contacted"
+If customer buys: Mark unit as "Sold"
+If customer declines: Dismiss match
+Match is archived
+Flow 4: Search for Specific Unit
+Customer calls asking about a specific model (e.g., "Do you have a 2025 Tiffin Allegro Bus 45OPP?")
+Salesperson opens app → Inventory screen → Search "2025 Tiffin Allegro Bus 45OPP"
+Sees if unit is in stock
+If in stock: Can view details and show customer
+If not in stock: Can check if any leads are waiting for this model
+Color Choices
+The RV Sales CRM uses a professional, automotive-inspired color scheme:
+Element
+Color
+Hex Code
+Usage
+Primary
+Deep Blue
+#0B5E7E
+Buttons, active states, key CTAs
+Secondary
+Warm Orange
+#E67E22
+Highlights, alerts, important info
+Success
+Forest Green
+#27AE60
+Matched units, completed actions
+Warning
+Amber
+#F39C12
+Pending matches, needs attention
+Error
+Coral Red
+#E74C3C
+Errors, sold units
+Background
+Off-White
+#F8F9FA
+Main background
+Surface
+White
+#FFFFFF
+Cards, elevated surfaces
+Text Primary
+Dark Gray
+#2C3E50
+Main text
+Text Secondary
+Medium Gray
+#7F8C8D
+Secondary text
+Border
+Light Gray
+#ECF0F1
+Dividers, borders
+Information Architecture
+Home / Dashboard
+├── Quick Stats (leads, units, matches)
+├── Recent Activity
+└── Quick Actions
+
+Leads Management
+├── Leads List
+│   ├── Lead Detail
+│   └── Add/Edit Lead
+└── Search & Filter
+
+Inventory Tracking
+├── Inventory List
+│   ├── Unit Detail
+│   └── Add/Edit Unit
+└── Search & Filter
+
+Matches & Notifications
+├── Matches List
+│   └── Match Detail (customer + unit)
+└── Action Buttons
+
+Settings
+├── User Profile
+├── Store Selection
+├── Notifications
+└── Preferences
+Technical Considerations
+Local-first: Store leads and inventory locally on device for offline access
+Backend sync (optional): Sync data across multiple devices/stores if needed
+AI Matching: Use backend LLM to intelligently match units with customer preferences
+Notifications: In-app notifications immediately; email/SMS via backend service
+Search: Fast local search with filters for leads and inventory
+Performance: Optimize for quick data entry and retrieval (salespeople need speed)
+Success Metrics
+Leads created per day
+Units matched per week
+Time from unit arrival to customer notification
+Customer contact rate after notification
+Sales conversion rate from matches
+User adoption among sales team
+Agents
+Market
+Create Agent
+New Agent
+
+Load More
+Chat
+Ask
+Search
+Write
+Image
+ChatFile
+Vision
+Agent
+Full Page
+Invite & Earn
