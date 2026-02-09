@@ -31,14 +31,28 @@ export default function InventoryScreen() {
     storeLocation: "",
   });
 
-  const { data: inventoryData, isLoading, refetch } = trpc.inventory.list.useQuery(
-    undefined,
-    { enabled: isAuthenticated }
+  const utils = trpc.useUtils();
+
+  const {
+    data: infiniteInventory,
+    isLoading,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = trpc.inventory.list.useInfiniteQuery(
+    { limit: 20 },
+    {
+      enabled: isAuthenticated,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    }
   );
+
+  const inventoryData = infiniteInventory?.pages.flatMap((page) => page.items) || [];
 
   const createMutation = trpc.inventory.create.useMutation({
     onSuccess: () => {
-      refetch();
+      utils.inventory.list.invalidate();
       setShowAddModal(false);
       setNewUnit({
         unitId: "",
@@ -50,7 +64,7 @@ export default function InventoryScreen() {
         price: "",
         storeLocation: "",
       });
-      const msg = "Unit logged! The AI is now scanning all leads for matches and will automatically text any matching customers.";
+      const msg = "Unit logged! The AI is now scanning all leads for matches and will automatically notify the Sales Manager.";
       if (Platform.OS === "web") {
         window.alert(msg);
       } else {
@@ -60,13 +74,19 @@ export default function InventoryScreen() {
   });
 
   const deleteMutation = trpc.inventory.delete.useMutation({
-    onSuccess: () => refetch(),
+    onSuccess: () => utils.inventory.list.invalidate(),
   });
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
+  };
+
+  const handleLoadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
   };
 
   const handleDeleteUnit = (id: number, name: string) => {
@@ -105,7 +125,7 @@ export default function InventoryScreen() {
   };
 
   const filteredInventory =
-    inventoryData?.filter(
+    inventoryData.filter(
       (unit) =>
         unit.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
         unit.make.toLowerCase().includes(searchQuery.toLowerCase())
@@ -182,6 +202,15 @@ export default function InventoryScreen() {
           keyExtractor={(item) => item.id.toString()}
           refreshing={refreshing}
           onRefresh={handleRefresh}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={() => (
+            isFetchingNextPage ? (
+              <View style={{ paddingVertical: 20 }}>
+                <ActivityIndicator color="#0B5E7E" />
+              </View>
+            ) : null
+          )}
           renderItem={({ item }) => (
             <View
               style={{

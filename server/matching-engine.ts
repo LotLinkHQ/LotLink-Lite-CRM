@@ -226,11 +226,15 @@ export async function runMatchingForNewInventory(
       let emailSent = false;
       let smsError: string | undefined;
       let emailError: string | undefined;
-      const emailEnabled = prefs?.emailNotifications !== false;
+      const managerEmail = "joanthan@lotlink.io";
+      const managerPhone = "5551234567"; // Mock manager phone
 
-      if (emailEnabled && lead.customerEmail) {
+      const emailEnabled = prefs?.emailNotifications !== false;
+      const smsEnabled = prefs?.smsNotifications !== false;
+
+      if (emailEnabled) {
         const emailResult = await sendEmail(
-          lead.customerEmail,
+          managerEmail,
           lead,
           unit,
           matchResult.score,
@@ -239,7 +243,7 @@ export async function runMatchingForNewInventory(
         if (emailResult.success) {
           emailSent = true;
           notificationsSent++;
-          console.log(`[Matching] Email sent to ${lead.customerName} at ${lead.customerEmail}`);
+          console.log(`[Matching] Manager Alert Email sent to ${managerEmail} regarding lead ${lead.customerName}`);
 
           await db.updateMatch(match.id, {
             status: "notified",
@@ -250,35 +254,30 @@ export async function runMatchingForNewInventory(
           await db.updateLead(lead.id, { status: "matched" });
         } else {
           emailError = emailResult.error;
-          console.log(`[Matching] Email failed for ${lead.customerName}: ${emailError}`);
+          console.log(`[Matching] Manager Email failed: ${emailError}`);
         }
       }
 
-      if (smsEnabled && lead.customerPhone) {
-        const message = buildNotificationMessage(lead, unit, matchResult.score, matchResult.reasons);
-        const smsResult = await sendSMS(lead.customerPhone, message);
+      if (smsEnabled && !emailSent) {
+        const unitName = `${unit.year} ${unit.make} ${unit.model}`;
+        const smsBody = `🚐 Lead Match Alert: ${lead.customerName} matches a new ${unitName} (Score: ${matchResult.score}/100). Check CRM for details!`;
+        const smsResult = await sendSMS(managerPhone, smsBody);
 
         if (smsResult.success) {
           smsSent = true;
-          if (!emailSent) notificationsSent++;
-          console.log(`[Matching] SMS sent to ${lead.customerName} at ${lead.customerPhone}`);
+          notificationsSent++;
+          console.log(`[Matching] Manager Alert SMS sent to ${managerPhone} regarding lead ${lead.customerName}`);
 
-          if (!emailSent) {
-            await db.updateMatch(match.id, {
-              status: "notified",
-              notificationSentAt: new Date(),
-              notificationMethod: "sms",
-            });
-            await db.updateLead(lead.id, { status: "matched" });
-          }
+          await db.updateMatch(match.id, {
+            status: "notified",
+            notificationSentAt: new Date(),
+            notificationMethod: "sms",
+          });
+          await db.updateLead(lead.id, { status: "matched" });
         } else {
           smsError = smsResult.error;
-          console.log(`[Matching] SMS failed for ${lead.customerName}: ${smsError}`);
+          console.log(`[Matching] Manager SMS failed: ${smsError}`);
         }
-      }
-
-      if (!lead.customerPhone && !lead.customerEmail) {
-        console.log(`[Matching] No contact info for ${lead.customerName}, match created but no notification sent`);
       }
 
       results.push({
@@ -328,27 +327,27 @@ export async function retryPendingNotifications(dealershipId: number) {
     const unit = entry.unit;
     const matchRecord = entry.match;
 
-    if (!lead || !unit) continue;
-    if (!lead.customerPhone && !lead.customerEmail) continue;
-    if (lead.dealershipId !== dealershipId) continue;
+    const managerEmail = "joanthan@lotlink.io";
+    const managerPhone = "5551234567"; // Mock manager phone
 
     let notified = false;
     const reasons = [matchRecord.matchReason || ""];
 
-    if (emailEnabled && lead.customerEmail) {
-      const emailResult = await sendEmail(lead.customerEmail, lead, unit, matchRecord.matchScore, reasons);
+    if (emailEnabled) {
+      const emailResult = await sendEmail(managerEmail, lead, unit, matchRecord.matchScore, reasons);
       if (emailResult.success) {
         notified = true;
-        console.log(`[Matching] Retry email sent to ${lead.customerName}`);
+        console.log(`[Matching] Retry manager email alert sent to ${managerEmail} for lead ${lead.customerName}`);
       }
     }
 
-    if (smsEnabled && lead.customerPhone) {
-      const message = buildNotificationMessage(lead, unit, matchRecord.matchScore, reasons);
-      const smsResult = await sendSMS(lead.customerPhone, message);
+    if (smsEnabled && !notified) {
+      const unitName = `${unit.year} ${unit.make} ${unit.model}`;
+      const message = `🚐 Retry Alert: Lead match found for ${lead.customerName} - ${unitName} (${matchRecord.matchScore}/100). Check CRM.`;
+      const smsResult = await sendSMS(managerPhone, message);
       if (smsResult.success) {
         notified = true;
-        console.log(`[Matching] Retry SMS sent to ${lead.customerName}`);
+        console.log(`[Matching] Retry manager SMS alert sent to ${managerPhone} for lead ${lead.customerName}`);
       }
     }
 

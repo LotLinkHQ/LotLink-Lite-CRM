@@ -37,10 +37,23 @@ export default function MatchesScreen() {
   const [contactNotes, setContactNotes] = useState("");
   const [scanning, setScanning] = useState(false);
 
-  const { data: matchesData, isLoading, refetch } = trpc.matches.list.useQuery(
-    undefined,
-    { enabled: isAuthenticated, refetchInterval: 10000 }
+  const {
+    data: infiniteMatches,
+    isLoading,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = trpc.matches.list.useInfiniteQuery(
+    { limit: 20 },
+    {
+      enabled: isAuthenticated,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      refetchInterval: 10000,
+    }
   );
+
+  const matchesList = infiniteMatches?.pages.flatMap((page) => page.items) || [];
 
   const updateStatusMutation = trpc.matches.updateStatus.useMutation({
     onSuccess: () => {
@@ -54,7 +67,7 @@ export default function MatchesScreen() {
     onSuccess: (data) => {
       setScanning(false);
       refetch();
-      const msg = `Scan complete! Found ${data.totalMatches} matches, sent ${data.totalNotifications} notifications.`;
+      const msg = `Scan complete! Found ${data.totalMatches} matches, sent ${data.totalNotifications} manager alerts to joanthan@lotlink.io.`;
       if (Platform.OS === "web") {
         window.alert(msg);
       } else {
@@ -69,6 +82,12 @@ export default function MatchesScreen() {
   const handleRunScan = () => {
     setScanning(true);
     runScanMutation.mutate();
+  };
+
+  const handleLoadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
   };
 
   const handleStatusUpdate = (matchId: number, status: string) => {
@@ -99,7 +118,6 @@ export default function MatchesScreen() {
     );
   }
 
-  const matchesList = matchesData || [];
   const pendingCount = matchesList.filter((m: any) => m.match?.status === "pending").length;
   const notifiedCount = matchesList.filter((m: any) => m.match?.status === "notified").length;
 
@@ -110,7 +128,7 @@ export default function MatchesScreen() {
           Matches
         </Text>
         <Text style={{ color: "#7F8C8D", fontSize: 14, marginBottom: 16 }}>
-          AI-matched leads to inventory - customers are automatically notified via SMS
+          AI-matched leads to inventory - Sales Manager is automatically notified via Email/SMS
         </Text>
 
         <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
@@ -120,7 +138,7 @@ export default function MatchesScreen() {
           </View>
           <View style={{ flex: 1, backgroundColor: "#E8F4FD", borderRadius: 8, padding: 12, alignItems: "center" }}>
             <Text style={{ fontSize: 20, fontWeight: "bold", color: "#3498DB" }}>{notifiedCount}</Text>
-            <Text style={{ fontSize: 11, color: "#7F8C8D" }}>Notified</Text>
+            <Text style={{ fontSize: 11, color: "#7F8C8D" }}>Manager Alerts</Text>
           </View>
           <View style={{ flex: 1, backgroundColor: "#E8F8EF", borderRadius: 8, padding: 12, alignItems: "center" }}>
             <Text style={{ fontSize: 20, fontWeight: "bold", color: "#27AE60" }}>{matchesList.length}</Text>
@@ -154,13 +172,22 @@ export default function MatchesScreen() {
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
           <Text style={{ fontSize: 40, marginBottom: 16 }}>🔍</Text>
           <Text style={{ color: "#7F8C8D", fontSize: 16, textAlign: "center" }}>
-            No matches yet. Add leads with preferences and log inventory arrivals - the system will automatically find matches and notify customers!
+            No matches yet. Add leads and inventory - the system will alert the Sales Manager (joanthan@lotlink.io) automatically!
           </Text>
         </View>
       ) : (
         <FlatList
           data={matchesList}
           keyExtractor={(item: any) => (item.match?.id || item.id || Math.random()).toString()}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={() => (
+            isFetchingNextPage ? (
+              <View style={{ paddingVertical: 20 }}>
+                <ActivityIndicator color="#0B5E7E" />
+              </View>
+            ) : null
+          )}
           renderItem={({ item }) => {
             const match = item.match || item;
             const lead = item.lead || {};

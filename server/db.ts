@@ -1,4 +1,4 @@
-import { eq, and, like, desc } from "drizzle-orm";
+import { eq, and, like, desc, lt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
@@ -23,30 +23,32 @@ import {
 let _db: ReturnType<typeof drizzle> | null = null;
 
 export function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
+  if (!_db) {
+    if (!process.env.DATABASE_URL) {
+      throw new Error(
+        "DATABASE_URL is not set. Please create a .env file based on .env.example and provide a valid PostgreSQL connection string."
+      );
+    }
     const client = postgres(process.env.DATABASE_URL);
     _db = drizzle(client);
   }
-  return _db!;
+  return _db;
 }
 
 export async function getUserLeads(dealershipId: number, cursor?: number, limit: number = 50) {
   const db = getDb();
-  let query = db
-    .select()
-    .from(leads)
-    .where(eq(leads.dealershipId, dealershipId))
-    .orderBy(desc(leads.createdAt))
-    .limit(limit + 1);
+  let whereClause = eq(leads.dealershipId, dealershipId);
 
   if (cursor) {
-    query = query.where(and(
-      eq(leads.dealershipId, dealershipId),
-      eq(leads.id, cursor)
-    ));
+    whereClause = and(whereClause, lt(leads.id, cursor)) as any;
   }
 
-  return query;
+  return db
+    .select()
+    .from(leads)
+    .where(whereClause)
+    .orderBy(desc(leads.id))
+    .limit(limit + 1);
 }
 
 export async function getLeadById(id: number) {
@@ -87,21 +89,18 @@ export async function searchLeads(dealershipId: number, query: string) {
 
 export async function getUserInventory(dealershipId: number, cursor?: number, limit: number = 50) {
   const db = getDb();
-  let query = db
-    .select()
-    .from(inventory)
-    .where(eq(inventory.dealershipId, dealershipId))
-    .orderBy(desc(inventory.arrivalDate))
-    .limit(limit + 1);
+  let whereClause = eq(inventory.dealershipId, dealershipId);
 
   if (cursor) {
-    query = query.where(and(
-      eq(inventory.dealershipId, dealershipId),
-      eq(inventory.id, cursor)
-    ));
+    whereClause = and(whereClause, lt(inventory.id, cursor)) as any;
   }
 
-  return query;
+  return db
+    .select()
+    .from(inventory)
+    .where(whereClause)
+    .orderBy(desc(inventory.id))
+    .limit(limit + 1);
 }
 
 export async function getInventoryById(id: number) {
@@ -272,10 +271,18 @@ export async function getAllDealershipLeads(dealershipId: number) {
     .orderBy(desc(leads.createdAt));
 }
 
-export async function getAllDealershipMatches(dealershipId: number) {
+export async function getAllDealershipMatches(dealershipId: number, cursor?: number, limit: number = 20) {
   const db = getDb();
+
+  let whereClause = eq(leads.dealershipId, dealershipId);
+
+  if (cursor) {
+    whereClause = and(whereClause, lt(matches.id, cursor)) as any;
+  }
+
   return db
     .select({
+      id: matches.id,
       match: matches,
       lead: leads,
       unit: inventory,
@@ -283,6 +290,7 @@ export async function getAllDealershipMatches(dealershipId: number) {
     .from(matches)
     .innerJoin(leads, eq(matches.leadId, leads.id))
     .innerJoin(inventory, eq(matches.inventoryId, inventory.id))
-    .where(eq(leads.dealershipId, dealershipId))
-    .orderBy(desc(matches.createdAt));
+    .where(whereClause)
+    .orderBy(desc(matches.id))
+    .limit(limit + 1);
 }

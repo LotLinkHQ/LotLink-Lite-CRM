@@ -36,14 +36,26 @@ export default function LeadsScreen() {
 
   const utils = trpc.useUtils();
 
-  const { data: leads, isLoading, refetch } = trpc.leads.list.useQuery(
-    undefined,
-    { enabled: isAuthenticated }
+  const {
+    data: leadsData,
+    isLoading,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = trpc.leads.list.useInfiniteQuery(
+    { limit: 20 },
+    {
+      enabled: isAuthenticated,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    }
   );
+
+  const leads = leadsData?.pages.flatMap((page) => page.items) || [];
 
   const createMutation = trpc.leads.create.useMutation({
     onSuccess: () => {
-      refetch();
+      utils.leads.list.invalidate();
       setShowAddModal(false);
       setNewLead({
         customerName: "",
@@ -62,13 +74,19 @@ export default function LeadsScreen() {
   });
 
   const deleteMutation = trpc.leads.delete.useMutation({
-    onSuccess: () => refetch(),
+    onSuccess: () => utils.leads.list.invalidate(),
   });
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
+  };
+
+  const handleLoadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
   };
 
   const handleDeleteLead = (id: number, name: string) => {
@@ -111,7 +129,7 @@ export default function LeadsScreen() {
   };
 
   const filteredLeads =
-    leads?.filter((lead) =>
+    leads.filter((lead) =>
       lead.customerName.toLowerCase().includes(searchQuery.toLowerCase())
     ) || [];
 
@@ -186,6 +204,15 @@ export default function LeadsScreen() {
           keyExtractor={(item) => item.id.toString()}
           refreshing={refreshing}
           onRefresh={handleRefresh}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={() => (
+            isFetchingNextPage ? (
+              <View style={{ paddingVertical: 20 }}>
+                <ActivityIndicator color="#0B5E7E" />
+              </View>
+            ) : null
+          )}
           renderItem={({ item }) => (
             <View
               style={{

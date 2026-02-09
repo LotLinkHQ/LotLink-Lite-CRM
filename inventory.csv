@@ -1,0 +1,6 @@
+unit_id,year,make,model,price,vin,type,length,weight,sleep_capacity
+RV001,2024,Winnebago,Micro Minnie,35000,WIN123456,Travel Trailer,21,4500,4
+RV002,2023,Airstream,Bambi,55000,AIR789012,Travel Trailer,16,3000,2
+RV003,2025,Jayco,North Point,85000,JAY345678,Fifth Wheel,38,12000,6
+RV004,2022,Forest River,Cherokee,28000,FOR901234,Travel Trailer,25,5500,5
+RV005,2024,Thor,Chateau,72000,THO567890,Class C,28,11000,6

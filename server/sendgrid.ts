@@ -45,12 +45,12 @@ async function getSendGridClient() {
   return { client: sgMail, fromEmail };
 }
 
-function buildEmailHtml(lead: any, unit: any, score: number, reasons: string[]): string {
+function buildManagerEmailHtml(lead: any, unit: any, score: number, reasons: string[]): string {
   const unitName = `${unit.year} ${unit.make} ${unit.model}`;
   const priceStr = unit.price
     ? `$${parseFloat(unit.price).toLocaleString()}`
     : "Contact for pricing";
-  const locationStr = unit.storeLocation || "our dealership";
+  const locationStr = unit.storeLocation || "your dealership";
 
   const reasonsList = reasons
     .map((r) => `<li style="margin-bottom: 4px;">${r}</li>`)
@@ -65,33 +65,39 @@ function buildEmailHtml(lead: any, unit: any, score: number, reasons: string[]):
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         <tr>
-          <td style="background: linear-gradient(135deg, #1e3a5f, #2d5a87); padding: 30px 40px; text-align:center;">
-            <h1 style="color:#ffffff; margin:0; font-size:24px;">Great News, ${lead.customerName}!</h1>
-            <p style="color:#b8d4e8; margin:8px 0 0; font-size:16px;">A matching RV just arrived!</p>
+          <td style="background: linear-gradient(135deg, #0B5E7E, #1e3a5f); padding: 30px 40px; text-align:center;">
+            <h1 style="color:#ffffff; margin:0; font-size:24px;">New Lead Match Found!</h1>
+            <p style="color:#b8d4e8; margin:8px 0 0; font-size:16px;">Sales Manager Alert: ${lead.customerName} matches a new unit.</p>
           </td>
         </tr>
         <tr>
           <td style="padding: 30px 40px;">
-            <div style="background-color:#f0f7ff; border-radius:8px; padding:20px; margin-bottom:20px; border-left: 4px solid #2d5a87;">
-              <h2 style="margin:0 0 8px; color:#1e3a5f; font-size:20px;">${unitName}</h2>
+            <div style="background-color:#f0f7ff; border-radius:8px; padding:20px; margin-bottom:20px; border-left: 4px solid #0B5E7E;">
+              <h2 style="margin:0 0 8px; color:#1e3a5f; font-size:20px;">Matched Unit: ${unitName}</h2>
               <p style="margin:4px 0; color:#555; font-size:16px;"><strong>Price:</strong> ${priceStr}</p>
               <p style="margin:4px 0; color:#555; font-size:16px;"><strong>Location:</strong> ${locationStr}</p>
-              ${unit.length ? `<p style="margin:4px 0; color:#555; font-size:16px;"><strong>Length:</strong> ${unit.length} ft</p>` : ""}
-              ${unit.bedType ? `<p style="margin:4px 0; color:#555; font-size:16px;"><strong>Bed Type:</strong> ${unit.bedType}</p>` : ""}
             </div>
-            <h3 style="color:#1e3a5f; margin:20px 0 10px;">Why We Think You'll Love It</h3>
+
+            <div style="background-color:#fff9f0; border-radius:8px; padding:20px; margin-bottom:20px; border-left: 4px solid #F39C12;">
+              <h3 style="margin:0 0 8px; color:#1e3a5f; font-size:18px;">Customer Information</h3>
+              <p style="margin:4px 0; color:#555; font-size:16px;"><strong>Name:</strong> ${lead.customerName}</p>
+              <p style="margin:4px 0; color:#555; font-size:16px;"><strong>Email:</strong> ${lead.customerEmail || "N/A"}</p>
+              <p style="margin:4px 0; color:#555; font-size:16px;"><strong>Phone:</strong> ${lead.customerPhone || "N/A"}</p>
+              <p style="margin:4px 0; color:#555; font-size:16px;"><strong>Match Score:</strong> ${score}/100</p>
+            </div>
+
+            <h3 style="color:#1e3a5f; margin:20px 0 10px;">Why This is a Strong Match</h3>
             <ul style="color:#555; padding-left:20px; font-size:14px; line-height:1.6;">
               ${reasonsList}
             </ul>
             <div style="text-align:center; margin:30px 0 10px;">
-              <p style="color:#555; font-size:16px; margin-bottom:15px;">Interested? Contact us to schedule a viewing!</p>
+              <p style="color:#555; font-size:16px; margin-bottom:15px;">Follow up with this lead as soon as possible!</p>
             </div>
           </td>
         </tr>
         <tr>
           <td style="background-color:#f8f8f8; padding:20px 40px; text-align:center; border-top:1px solid #eee;">
-            <p style="color:#999; font-size:12px; margin:0;">You're receiving this because you signed up for RV match notifications.</p>
-            <p style="color:#999; font-size:12px; margin:4px 0 0;">Reply STOP to unsubscribe from future notifications.</p>
+            <p style="color:#999; font-size:12px; margin:0;">Internal Dealer Alert - LotLink RV Mini CRM</p>
           </td>
         </tr>
       </table>
@@ -101,23 +107,25 @@ function buildEmailHtml(lead: any, unit: any, score: number, reasons: string[]):
 </html>`;
 }
 
-function buildEmailText(lead: any, unit: any, score: number, reasons: string[]): string {
+function buildManagerEmailText(lead: any, unit: any, score: number, reasons: string[]): string {
   const unitName = `${unit.year} ${unit.make} ${unit.model}`;
   const priceStr = unit.price
     ? `$${parseFloat(unit.price).toLocaleString()}`
     : "Contact for pricing";
-  const locationStr = unit.storeLocation || "our dealership";
+  const locationStr = unit.storeLocation || "your dealership";
 
   return (
-    `Hi ${lead.customerName}!\n\n` +
-    `Great news! A ${unitName} just arrived at ${locationStr}.\n` +
+    `INTERNAL ALERT: New Lead Match Found!\n\n` +
+    `Lead: ${lead.customerName}\n` +
+    `Email: ${lead.customerEmail || "N/A"}\n` +
+    `Phone: ${lead.customerPhone || "N/A"}\n` +
+    `Match Score: ${score}/100\n\n` +
+    `Matched Unit: ${unitName}\n` +
     `Price: ${priceStr}\n` +
-    `${unit.length ? `Length: ${unit.length} ft\n` : ""}` +
-    `${unit.bedType ? `Bed Type: ${unit.bedType}\n` : ""}` +
-    `\nWhy we think you'll love it:\n` +
+    `Location: ${locationStr}\n\n` +
+    `Why this is a strong match:\n` +
     reasons.map((r) => `  - ${r}`).join("\n") +
-    `\n\nContact us to schedule a viewing. We'd love to help you find your perfect RV!\n\n` +
-    `---\nYou're receiving this because you signed up for RV match notifications. Reply STOP to unsubscribe.`
+    `\n\nFollow up with this lead as soon as possible!`
   );
 }
 
@@ -136,9 +144,9 @@ export async function sendEmail(
     const msg = {
       to,
       from: fromEmail,
-      subject: `🚐 A ${unitName} just arrived — it matches your preferences!`,
-      text: buildEmailText(lead, unit, score, reasons),
-      html: buildEmailHtml(lead, unit, score, reasons),
+      subject: `📢 New Match Found: ${lead.customerName} — ${unitName}`,
+      text: buildManagerEmailText(lead, unit, score, reasons),
+      html: buildManagerEmailHtml(lead, unit, score, reasons),
     };
 
     await client.send(msg);

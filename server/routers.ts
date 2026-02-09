@@ -63,9 +63,26 @@ export const appRouter = router({
   }),
 
   leads: router({
-    list: protectedProcedure.query(({ ctx }) =>
-      db.getUserLeads(ctx.dealership.id)
-    ),
+    list: protectedProcedure
+      .input(
+        z.object({
+          cursor: z.number().nullish(),
+          limit: z.number().min(1).max(100).default(50),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        const limit = input.limit ?? 50;
+        const items = await db.getUserLeads(ctx.dealership.id, input.cursor ?? undefined, limit);
+        let nextCursor: typeof input.cursor | undefined = undefined;
+        if (items.length > limit) {
+          const nextItem = items.pop();
+          nextCursor = nextItem!.id;
+        }
+        return {
+          items,
+          nextCursor,
+        };
+      }),
     getById: protectedProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ ctx, input }) => {
@@ -135,9 +152,26 @@ export const appRouter = router({
   }),
 
   inventory: router({
-    list: protectedProcedure.query(({ ctx }) =>
-      db.getUserInventory(ctx.dealership.id)
-    ),
+    list: protectedProcedure
+      .input(
+        z.object({
+          cursor: z.number().nullish(),
+          limit: z.number().min(1).max(100).default(50),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        const limit = input.limit ?? 50;
+        const items = await db.getUserInventory(ctx.dealership.id, input.cursor ?? undefined, limit);
+        let nextCursor: typeof input.cursor | undefined = undefined;
+        if (items.length > limit) {
+          const nextItem = items.pop();
+          nextCursor = nextItem!.id;
+        }
+        return {
+          items,
+          nextCursor,
+        };
+      }),
     getById: protectedProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ ctx, input }) => {
@@ -211,9 +245,26 @@ export const appRouter = router({
   }),
 
   matches: router({
-    list: protectedProcedure.query(({ ctx }) =>
-      db.getAllDealershipMatches(ctx.dealership.id)
-    ),
+    list: protectedProcedure
+      .input(
+        z.object({
+          cursor: z.number().nullish(),
+          limit: z.number().min(1).max(100).default(20),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        const limit = input.limit ?? 20;
+        const items = await db.getAllDealershipMatches(ctx.dealership.id, input.cursor ?? undefined, limit);
+        let nextCursor: typeof input.cursor | undefined = undefined;
+        if (items.length > limit) {
+          const nextItem = items.pop();
+          nextCursor = nextItem!.id;
+        }
+        return {
+          items,
+          nextCursor,
+        };
+      }),
     getByInventoryId: protectedProcedure
       .input(z.object({ inventoryId: z.number() }))
       .query(async ({ ctx, input }) => {
