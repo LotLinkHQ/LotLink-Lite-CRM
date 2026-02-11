@@ -45,6 +45,7 @@ export const dealerships = pgTable("dealerships", {
   address: text("address"),
   numberOfStores: integer("number_of_stores").default(1),
   stores: json("stores"),
+  branding: json("branding"), // { primaryColor, logoUrl, showPoweredBy }
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

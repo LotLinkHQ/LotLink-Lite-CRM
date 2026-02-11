@@ -6,6 +6,7 @@ import { useState } from "react";
 import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { trpc, createTRPCClient } from "@/lib/trpc";
+import { BrandProvider } from "@/app/context/BrandContext";
 
 export default function RootLayout() {
   const [queryClient] = useState(
@@ -26,12 +27,14 @@ export default function RootLayout() {
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <SafeAreaProvider>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="login" />
-              <Stack.Screen name="(tabs)" />
-            </Stack>
-            <StatusBar style="auto" />
+            <BrandProvider>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="login" />
+                <Stack.Screen name="(tabs)" />
+              </Stack>
+              <StatusBar style="auto" />
+            </BrandProvider>
           </SafeAreaProvider>
         </QueryClientProvider>
       </trpc.Provider>

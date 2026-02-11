@@ -1,0 +1,18 @@
+Starting Poulsbo RV scraper...
+PostgresError: column "branding" does not exist
+    at ErrorResponse (C:\Users\OBSch\OneDrive\Desktop\LotLink\Official LotLink Inc\RV-Sales-Mini-CRM\node_modules\postgres\cjs\src\connection.js:815:30)
+    at handle (C:\Users\OBSch\OneDrive\Desktop\LotLink\Official LotLink Inc\RV-Sales-Mini-CRM\node_modules\postgres\cjs\src\connection.js:489:6)
+    at Socket.data (C:\Users\OBSch\OneDrive\Desktop\LotLink\Official LotLink Inc\RV-Sales-Mini-CRM\node_modules\postgres\cjs\src\connection.js:324:9)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+  severity_local: 'ERROR',
+  severity: 'ERROR',
+  code: '42703',
+  position: '110',
+  file: 'parse_relation.c',
+  line: '3827',
+  routine: 'errorMissingColumn'
+}
