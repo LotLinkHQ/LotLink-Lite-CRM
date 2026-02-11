@@ -68,6 +68,7 @@ function buildManagerEmailHtml(lead: any, unit: any, score: number, reasons: str
           <td style="background: linear-gradient(135deg, #0B5E7E, #1e3a5f); padding: 30px 40px; text-align:center;">
             <h1 style="color:#ffffff; margin:0; font-size:24px;">New Lead Match Found!</h1>
             <p style="color:#b8d4e8; margin:8px 0 0; font-size:16px;">Sales Manager Alert: ${lead.customerName} matches a new unit.</p>
+            <p style="color:#ffffff; margin:8px 0 0; font-size:14px; font-weight: bold;">CRM Contact: ${lead.salespersonName || "N/A"}</p>
           </td>
         </tr>
         <tr>
@@ -117,6 +118,7 @@ function buildManagerEmailText(lead: any, unit: any, score: number, reasons: str
   return (
     `INTERNAL ALERT: New Lead Match Found!\n\n` +
     `Lead: ${lead.customerName}\n` +
+    `CRM Contact: ${lead.salespersonName || "N/A"}\n` +
     `Email: ${lead.customerEmail || "N/A"}\n` +
     `Phone: ${lead.customerPhone || "N/A"}\n` +
     `Match Score: ${score}/100\n\n` +

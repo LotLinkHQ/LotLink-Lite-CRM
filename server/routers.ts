@@ -102,6 +102,7 @@ export const appRouter = router({
           preferences: z.record(z.string(), z.any()).optional().nullable(),
           notes: z.string().optional().nullable(),
           storeLocation: z.string().optional().nullable(),
+          salespersonName: z.string().optional().nullable(),
         })
       )
       .mutation(({ ctx, input }) =>
@@ -116,6 +117,7 @@ export const appRouter = router({
           preferences: input.preferences,
           notes: input.notes,
           storeLocation: input.storeLocation,
+          salespersonName: input.salespersonName,
           status: "active",
         })
       ),
@@ -353,6 +355,20 @@ export const appRouter = router({
         }
         return db.getDealershipPreferences(ctx.dealership.id);
       }),
+  }),
+
+  notifications: router({
+    list: protectedProcedure
+      .input(z.object({ limit: z.number().min(1).max(100).default(20) }))
+      .query(({ ctx, input }) =>
+        db.getInAppNotifications(ctx.dealership.id, input.limit)
+      ),
+    getUnreadCount: protectedProcedure.query(({ ctx }) =>
+      db.getUnreadNotificationCount(ctx.dealership.id)
+    ),
+    markAsRead: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ input }) => db.markNotificationAsRead(input.id)),
   }),
 });
 

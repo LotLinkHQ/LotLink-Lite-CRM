@@ -77,6 +77,7 @@ export const leads = pgTable("leads", {
   notes: text("notes"),
   status: leadStatusEnum("status").default("active").notNull(),
   storeLocation: varchar("store_location", { length: 100 }),
+  salespersonName: varchar("salesperson_name", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -163,3 +164,18 @@ export const dealershipPreferences = pgTable("dealership_preferences", {
 
 export type DealershipPreferences = typeof dealershipPreferences.$inferSelect;
 export type InsertDealershipPreferences = typeof dealershipPreferences.$inferInsert;
+
+export const inAppNotifications = pgTable("in_app_notifications", {
+  id: serial("id").primaryKey(),
+  dealershipId: integer("dealership_id").notNull(),
+  leadId: integer("lead_id"),
+  inventoryId: integer("inventory_id"),
+  matchId: integer("match_id"),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type InAppNotification = typeof inAppNotifications.$inferSelect;
+export type InsertInAppNotification = typeof inAppNotifications.$inferInsert;

@@ -252,6 +252,17 @@ export async function runMatchingForNewInventory(
           });
 
           await db.updateLead(lead.id, { status: "matched" });
+
+          // In-App Notification for the person who entered the lead
+          const salesperson = lead.salespersonName || "a salesperson";
+          await db.createInAppNotification({
+            dealershipId: dealershipId,
+            leadId: lead.id,
+            inventoryId: inventoryId,
+            matchId: match.id,
+            title: "New Match Found!",
+            message: `A potential match has been found for your lead ${lead.customerName} with unit ${unit.year} ${unit.make} ${unit.model}. (Entered by: ${salesperson})`,
+          });
         } else {
           emailError = emailResult.error;
           console.log(`[Matching] Manager Email failed: ${emailError}`);

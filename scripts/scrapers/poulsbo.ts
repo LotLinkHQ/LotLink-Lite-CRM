@@ -7,6 +7,7 @@ import "dotenv/config";
 const BASE_URL = "https://www.poulsborv.com";
 const CATEGORIES = [
     "/shop/rvs/class-a/",
+    "/shop/rvs/class-b/",
     "/shop/rvs/class-c/",
     "/shop/rvs/travel-trailer/",
     "/shop/rvs/fifth-wheel/"

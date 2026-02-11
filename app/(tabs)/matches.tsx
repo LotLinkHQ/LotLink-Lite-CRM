@@ -15,6 +15,8 @@ import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useDealershipAuth } from "@/hooks/use-dealership-auth";
 import { Ionicons } from "@expo/vector-icons"; // Use Ionicons for trust badges
+import { NotificationsModal } from "@/components/notifications-modal";
+import { NotificationBadge } from "@/components/notification-badge";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "#F39C12",
@@ -53,6 +55,7 @@ export default function MatchesScreen() {
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
   const [contactNotes, setContactNotes] = useState("");
   const [scanning, setScanning] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const {
     data: infiniteMatches,
@@ -141,9 +144,18 @@ export default function MatchesScreen() {
   return (
     <ScreenContainer>
       <View style={{ marginBottom: 16 }}>
-        <Text style={{ fontSize: 24, fontWeight: "bold", color: "#2C3E50", marginBottom: 4 }}>
-          High-Value Matches
-        </Text>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+          <Text style={{ fontSize: 24, fontWeight: "bold", color: "#2C3E50" }}>
+            High-Value Matches
+          </Text>
+          <TouchableOpacity
+            onPress={() => setShowNotifications(true)}
+            style={{ padding: 8, backgroundColor: "#F8F9FA", borderRadius: 20, position: "relative" }}
+          >
+            <Ionicons name="notifications-outline" size={24} color="#0B5E7E" />
+            <NotificationBadge />
+          </TouchableOpacity>
+        </View>
         <Text style={{ color: "#7F8C8D", fontSize: 14, marginBottom: 16 }}>
           Real-time matched leads ready for sales engagement.
         </Text>
@@ -432,6 +444,10 @@ export default function MatchesScreen() {
           </ScrollView>
         </View>
       </Modal>
+      <NotificationsModal
+        visible={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
     </ScreenContainer>
   );
 }

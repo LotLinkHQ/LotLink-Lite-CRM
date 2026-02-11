@@ -18,6 +18,8 @@ import {
   InsertDealershipPreferences,
   InsertDealership,
   InsertDealershipSession,
+  inAppNotifications,
+  InsertInAppNotification,
 } from "../shared/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -293,4 +295,42 @@ export async function getAllDealershipMatches(dealershipId: number, cursor?: num
     .where(whereClause)
     .orderBy(desc(matches.id))
     .limit(limit + 1);
+}
+
+export async function createInAppNotification(data: InsertInAppNotification) {
+  const db = getDb();
+  const result = await db.insert(inAppNotifications).values(data).returning();
+  return result[0];
+}
+
+export async function getInAppNotifications(dealershipId: number, limit: number = 20) {
+  const db = getDb();
+  return db
+    .select()
+    .from(inAppNotifications)
+    .where(eq(inAppNotifications.dealershipId, dealershipId))
+    .orderBy(desc(inAppNotifications.createdAt))
+    .limit(limit);
+}
+
+export async function markNotificationAsRead(id: number) {
+  const db = getDb();
+  await db
+    .update(inAppNotifications)
+    .set({ isRead: true })
+    .where(eq(inAppNotifications.id, id));
+}
+
+export async function getUnreadNotificationCount(dealershipId: number) {
+  const db = getDb();
+  const result = await db
+    .select()
+    .from(inAppNotifications)
+    .where(
+      and(
+        eq(inAppNotifications.dealershipId, dealershipId),
+        eq(inAppNotifications.isRead, false)
+      )
+    );
+  return result.length;
 }

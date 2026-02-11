@@ -32,6 +32,7 @@ export default function LeadsScreen() {
     preferredBedType: "",
     minLength: "",
     notes: "",
+    salespersonName: "",
   });
 
   const utils = trpc.useUtils();
@@ -69,6 +70,7 @@ export default function LeadsScreen() {
         preferredBedType: "",
         minLength: "",
         notes: "",
+        salespersonName: "",
       });
     },
   });
@@ -125,6 +127,7 @@ export default function LeadsScreen() {
       preferredYear: newLead.preferredYear ? parseInt(newLead.preferredYear) : null,
       preferences: Object.keys(preferences).length > 0 ? preferences : null,
       notes: newLead.notes || null,
+      salespersonName: newLead.salespersonName || null,
     });
   };
 
@@ -297,6 +300,7 @@ export default function LeadsScreen() {
               {[
                 { label: "Customer Name *", key: "customerName", placeholder: "Enter name" },
                 { label: "Phone (for SMS alerts) *", key: "customerPhone", placeholder: "e.g., 555-123-4567" },
+                { label: "Enters as (Your Name) *", key: "salespersonName", placeholder: "Who is adding this customer?" },
                 { label: "Email", key: "customerEmail", placeholder: "Enter email" },
                 { label: "Preferred Make", key: "preferredMake", placeholder: "e.g., Tiffin, Winnebago, Thor" },
                 { label: "Preferred Model", key: "preferredModel", placeholder: "e.g., Allegro Bus 45OPP" },
