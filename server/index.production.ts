@@ -4,6 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import * as trpcExpress from "@trpc/server/adapters/express";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { appRouter } from "./routers";
 import { createContext } from "./trpc";
 import { seedDatabase } from "./seed";
@@ -143,6 +144,19 @@ app.post("/api/opt-in", async (req, res) => {
 
 const server = app.listen(PORT, async () => {
   console.log(`[Server] Production server running on port ${PORT}`);
+
+  // Run database migrations to create tables if they don't exist
+  try {
+    console.log("[DB] Running migrations...");
+    const database = getDb();
+    await migrate(database, { migrationsFolder: path.join(__dirname, "../drizzle") });
+    console.log("[DB] Migrations complete");
+  } catch (error: any) {
+    console.error("[DB] Migration error:", error.message);
+    process.exit(1);
+  }
+
+  // Seed default data after tables are ready
   await seedDatabase();
 });
 
