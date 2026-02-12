@@ -1,6 +1,7 @@
 {
     "cli": {
-        "version": ">= 5.2.0"
+        "version": ">= 5.2.0",
+        "appVersionSource": "local"
     },
     "build": {
         "development": {
@@ -8,6 +9,9 @@
             "distribution": "internal",
             "ios": {
                 "simulator": true
+            },
+            "env": {
+                "API_URL": "http://localhost:5000"
             }
         },
         "preview": {
@@ -17,18 +21,36 @@
             },
             "android": {
                 "buildType": "apk"
+            },
+            "env": {
+                "API_URL": "https://your-staging-api.com"
             }
         },
         "production": {
+            "distribution": "store",
             "ios": {
-                "bundleIdentifier": "com.lotlink.rvsalescrm"
+                "resourceClass": "m-medium"
             },
             "android": {
-                "package": "com.lotlink.rvsalescrm"
-            }
+                "buildType": "app-bundle"
+            },
+            "env": {
+                "API_URL": "https://your-production-api.com"
+            },
+            "autoIncrement": true
         }
     },
     "submit": {
-        "production": {}
+        "production": {
+            "ios": {
+                "appleId": "your-apple-id@email.com",
+                "ascAppId": "your-app-store-connect-app-id",
+                "appleTeamId": "YOUR_TEAM_ID"
+            },
+            "android": {
+                "serviceAccountKeyPath": "./google-service-account.json",
+                "track": "production"
+            }
+        }
     }
 }

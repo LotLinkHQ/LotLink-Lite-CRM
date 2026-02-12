@@ -5,9 +5,17 @@
   "main": "expo-router/entry",
   "scripts": {
     "dev": "concurrently \"npx tsx server/index.ts\" \"npx expo start --web --port 8081\"",
+    "start": "npx tsx server/index.production.ts",
     "start:server": "npx tsx server/index.ts",
+    "start:server:prod": "npx tsx server/index.production.ts",
     "start:web": "npx expo start --web --port 8081",
-    "db:push": "npx drizzle-kit push"
+    "build:ios": "eas build --platform ios",
+    "build:android": "eas build --platform android",
+    "build:all": "eas build --platform all",
+    "submit:ios": "eas submit --platform ios",
+    "submit:android": "eas submit --platform android",
+    "db:push": "npx drizzle-kit push",
+    "db:migrate": "npx drizzle-kit migrate"
   },
   "dependencies": {
     "@expo/metro-runtime": "~4.0.1",
