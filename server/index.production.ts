@@ -19,8 +19,9 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
   "http://localhost:5000",
   "http://localhost:8081",
+  "https://lotlink.app",
+  "https://www.lotlink.app",
   process.env.FRONTEND_URL,
-  // Add your production domains here
 ].filter(Boolean) as string[];
 
 // Rate limiting for authentication endpoints
