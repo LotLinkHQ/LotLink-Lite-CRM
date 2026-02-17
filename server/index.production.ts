@@ -24,11 +24,20 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
 ].filter(Boolean) as string[];
 
-// Rate limiting for authentication endpoints
+// Rate limiting for authentication endpoints only (strict)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 requests per windowMs
+  max: 10, // 10 login attempts per 15 min per IP
   message: "Too many login attempts, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// General API rate limiting (generous for normal app usage)
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 200, // 200 requests per minute per IP
+  message: "Too many requests, please slow down.",
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -54,8 +63,12 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Apply rate limiting to tRPC endpoints (includes auth)
-app.use("/api/trpc", authLimiter);
+// Apply strict rate limiting only to auth endpoints
+app.use("/api/trpc/auth.login", authLimiter);
+app.use("/api/trpc/auth.logout", authLimiter);
+
+// Apply general rate limiting to all tRPC endpoints
+app.use("/api/trpc", apiLimiter);
 
 app.use(
   "/api/trpc",
@@ -149,12 +162,24 @@ const server = app.listen(PORT, async () => {
   // Run database migrations to create tables if they don't exist
   try {
     console.log("[DB] Running migrations...");
-    const database = getDb();
-    await migrate(database, { migrationsFolder: path.join(__dirname, "../drizzle") });
-    console.log("[DB] Migrations complete");
+    const migrationsPath = path.join(__dirname, "../drizzle");
+    const fs = await import("fs");
+    if (fs.existsSync(migrationsPath)) {
+      const database = getDb();
+      await migrate(database, { migrationsFolder: migrationsPath });
+      console.log("[DB] Migrations complete");
+    } else {
+      console.warn("[DB] Migrations folder not found at:", migrationsPath);
+      console.warn("[DB] Skipping migrations — tables should already exist");
+    }
   } catch (error: any) {
-    console.error("[DB] Migration error:", error.message);
-    process.exit(1);
+    // Don't crash if tables already exist
+    if (error.message?.includes("already exists")) {
+      console.log("[DB] Tables already exist, skipping migrations");
+    } else {
+      console.error("[DB] Migration error:", error.message);
+      process.exit(1);
+    }
   }
 
   // Seed default data after tables are ready

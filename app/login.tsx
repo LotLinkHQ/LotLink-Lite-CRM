@@ -145,18 +145,6 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
-            <View
-              style={{
-                marginTop: 24,
-                backgroundColor: "#FEF9E7",
-                borderRadius: 8,
-                padding: 16,
-                borderWidth: 1,
-                borderColor: "#F39C12",
-              }}
-            >
-              {/* Test credentials removed for security - use seed script to create test accounts */}
-            </View>
           </View>
 
           <View style={{ marginTop: 32, alignItems: "center" }}>

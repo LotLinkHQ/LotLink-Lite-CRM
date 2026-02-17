@@ -165,6 +165,8 @@ export async function runMatchingForNewInventory(
   const activeLeads = await db.getAllDealershipLeads(dealershipId);
   console.log(`[Matching] Scanning ${activeLeads.length} active leads against ${unit.year} ${unit.make} ${unit.model}`);
 
+  // Get dealership info for manager contact details
+  const dealership = await db.getDealershipById(dealershipId);
   const prefs = await db.getDealershipPreferences(dealershipId);
   const sensitivity = prefs?.matchingSensitivity || "moderate";
   const threshold = getMatchThreshold(sensitivity);
@@ -226,8 +228,8 @@ export async function runMatchingForNewInventory(
       let emailSent = false;
       let smsError: string | undefined;
       let emailError: string | undefined;
-      const managerEmail = "joanthan@lotlink.io";
-      const managerPhone = "5551234567"; // Mock manager phone
+      const managerEmail = dealership?.email || process.env.MANAGER_EMAIL || "";
+      const managerPhone = dealership?.phone || process.env.MANAGER_PHONE || "";
 
       const emailEnabled = prefs?.emailNotifications !== false;
       const smsEnabled = prefs?.smsNotifications !== false;
@@ -328,6 +330,8 @@ export async function retryPendingNotifications(dealershipId: number) {
 
   console.log(`[Matching] Found ${pendingMatches.length} pending matches to retry`);
 
+  // Get dealership info for manager contact details
+  const dealership = await db.getDealershipById(dealershipId);
   const prefs = await db.getDealershipPreferences(dealershipId);
   const emailEnabled = prefs?.emailNotifications !== false;
   const smsEnabled = prefs?.smsNotifications !== false;
@@ -338,8 +342,8 @@ export async function retryPendingNotifications(dealershipId: number) {
     const unit = entry.unit;
     const matchRecord = entry.match;
 
-    const managerEmail = "joanthan@lotlink.io";
-    const managerPhone = "5551234567"; // Mock manager phone
+    const managerEmail = dealership?.email || process.env.MANAGER_EMAIL || "";
+    const managerPhone = dealership?.phone || process.env.MANAGER_PHONE || "";
 
     let notified = false;
     const reasons = [matchRecord.matchReason || ""];

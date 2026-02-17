@@ -1,48 +1,23 @@
 import sgMail from "@sendgrid/mail";
 
-async function getCredentials() {
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const xReplitToken = process.env.REPL_IDENTITY
-    ? "repl " + process.env.REPL_IDENTITY
-    : process.env.WEB_REPL_RENEWAL
-      ? "depl " + process.env.WEB_REPL_RENEWAL
-      : null;
+let initialized = false;
+let fromEmail = "";
 
-  if (!xReplitToken) {
-    throw new Error("X_REPLIT_TOKEN not found for repl/depl");
+function initSendGrid(): boolean {
+  if (initialized) return true;
+
+  const apiKey = process.env.SENDGRID_API_KEY;
+  const from = process.env.SENDGRID_FROM_EMAIL;
+
+  if (!apiKey || !from) {
+    console.warn("[SendGrid] Missing SENDGRID_API_KEY or SENDGRID_FROM_EMAIL — email disabled");
+    return false;
   }
 
-  const connUrl =
-    "https://" +
-    hostname +
-    "/api/v2/connection?include_secrets=true&connector_names=sendgrid";
-  const connRes = await fetch(connUrl, {
-    headers: {
-      Accept: "application/json",
-      X_REPLIT_TOKEN: xReplitToken,
-    },
-  });
-  const connData = await connRes.json();
-  const connectionSettings = connData.items?.[0];
-
-  if (
-    !connectionSettings ||
-    !connectionSettings.settings?.api_key ||
-    !connectionSettings.settings?.from_email
-  ) {
-    throw new Error("SendGrid not connected");
-  }
-
-  return {
-    apiKey: connectionSettings.settings.api_key,
-    fromEmail: connectionSettings.settings.from_email,
-  };
-}
-
-async function getSendGridClient() {
-  const { apiKey, fromEmail } = await getCredentials();
   sgMail.setApiKey(apiKey);
-  return { client: sgMail, fromEmail };
+  fromEmail = from;
+  initialized = true;
+  return true;
 }
 
 function buildManagerEmailHtml(lead: any, unit: any, score: number, reasons: string[]): string {
@@ -139,19 +114,21 @@ export async function sendEmail(
   reasons: string[]
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const { client, fromEmail } = await getSendGridClient();
+    if (!initSendGrid()) {
+      return { success: false, error: "SendGrid not configured" };
+    }
 
     const unitName = `${unit.year} ${unit.make} ${unit.model}`;
 
     const msg = {
       to,
       from: fromEmail,
-      subject: `📢 New Match Found: ${lead.customerName} — ${unitName}`,
+      subject: `New Match Found: ${lead.customerName} — ${unitName}`,
       text: buildManagerEmailText(lead, unit, score, reasons),
       html: buildManagerEmailHtml(lead, unit, score, reasons),
     };
 
-    await client.send(msg);
+    await sgMail.send(msg);
     console.log(`[SendGrid] Email sent to ${to}`);
     return { success: true };
   } catch (error: any) {

@@ -25,7 +25,8 @@ function getApiUrl(): string {
     return "http://localhost:5000/api/trpc";
   }
 
-  // Production fallback - should be configured via EAS
+  // Production fallback - this should NEVER be hit if EAS env vars are set
+  console.error("[TRPC] WARNING: No API_URL configured. Set API_URL in eas.json production env.");
   return "https://your-production-api.com/api/trpc";
 }
 

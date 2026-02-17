@@ -16,11 +16,20 @@ const app = express();
 const PORT = 5000;
 const EXPO_PORT = 8081;
 
-// Rate limiting for authentication endpoints
+// Rate limiting for authentication endpoints only (strict)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 requests per windowMs
+  max: 10, // 10 login attempts per 15 min per IP
   message: "Too many login attempts, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// General API rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 200,
+  message: "Too many requests, please slow down.",
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -32,8 +41,12 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 
-// Apply rate limiting to tRPC endpoints (includes auth)
-app.use("/api/trpc", authLimiter);
+// Apply strict rate limiting only to auth endpoints
+app.use("/api/trpc/auth.login", authLimiter);
+app.use("/api/trpc/auth.logout", authLimiter);
+
+// Apply general rate limiting to all tRPC endpoints
+app.use("/api/trpc", apiLimiter);
 
 app.use(
   "/api/trpc",

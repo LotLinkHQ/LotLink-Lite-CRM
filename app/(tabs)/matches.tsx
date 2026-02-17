@@ -87,7 +87,7 @@ export default function MatchesScreen() {
     onSuccess: (data) => {
       setScanning(false);
       refetch();
-      const msg = `Scan complete! Found ${data.totalMatches} matches, sent ${data.totalNotifications} manager alerts to joanthan@lotlink.io.`;
+      const msg = `Scan complete! Found ${data.totalMatches} matches, sent ${data.totalNotifications} manager alerts.`;
       if (Platform.OS === "web") {
         window.alert(msg);
       } else {
@@ -207,7 +207,7 @@ export default function MatchesScreen() {
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
           <Text style={{ fontSize: 40, marginBottom: 16 }}>🔍</Text>
           <Text style={{ color: "#7F8C8D", fontSize: 16, textAlign: "center" }}>
-            No matches yet. Add leads and inventory - the system will alert verify and alert you automatically!
+            No matches yet. Add leads and inventory — the system will match and alert you automatically!
           </Text>
         </View>
       ) : (
