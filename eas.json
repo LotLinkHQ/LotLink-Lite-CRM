@@ -23,7 +23,7 @@
                 "buildType": "apk"
             },
             "env": {
-                "API_URL": "https://your-staging-api.com"
+                "API_URL": "https://fxgmbd6h.up.railway.app"
             }
         },
         "production": {
@@ -35,7 +35,7 @@
                 "buildType": "app-bundle"
             },
             "env": {
-                "API_URL": "https://your-production-api.com"
+                "API_URL": "https://fxgmbd6h.up.railway.app"
             },
             "autoIncrement": true
         }
