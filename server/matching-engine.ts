@@ -1,5 +1,4 @@
 import * as db from "./db";
-import { sendSMS } from "./twilio";
 import { sendEmail } from "./sendgrid";
 
 interface MatchResult {
@@ -137,18 +136,8 @@ function getMatchThreshold(sensitivity: string): number {
   }
 }
 
-function buildNotificationMessage(lead: any, unit: any, score: number, reasons: string[]): string {
-  const unitName = `${unit.year} ${unit.make} ${unit.model}`;
-  const priceStr = unit.price ? ` - $${parseFloat(unit.price).toLocaleString()}` : "";
-  const locationStr = unit.storeLocation ? ` at ${unit.storeLocation}` : "";
-
-  return (
-    `Hi ${lead.customerName}! Great news from your dealership! ` +
-    `A ${unitName}${priceStr} just arrived${locationStr}. ` +
-    `Based on your preferences, we think this could be a great fit for you. ` +
-    `Reply or call us to schedule a viewing. We'd love to help you find your perfect RV!`
-  );
-}
+// Score threshold for instant email alerts to manager
+const HIGH_VALUE_THRESHOLD = 80;
 
 export async function runMatchingForNewInventory(
   inventoryId: number,
@@ -165,20 +154,16 @@ export async function runMatchingForNewInventory(
   const activeLeads = await db.getAllDealershipLeads(dealershipId);
   console.log(`[Matching] Scanning ${activeLeads.length} active leads against ${unit.year} ${unit.make} ${unit.model}`);
 
-  // Get dealership info for manager contact details
   const dealership = await db.getDealershipById(dealershipId);
   const prefs = await db.getDealershipPreferences(dealershipId);
   const sensitivity = prefs?.matchingSensitivity || "moderate";
   const threshold = getMatchThreshold(sensitivity);
-  const smsEnabled = prefs?.smsNotifications !== false;
 
-  console.log(`[Matching] Sensitivity: ${sensitivity}, Threshold: ${threshold}, SMS enabled: ${smsEnabled}`);
+  console.log(`[Matching] Sensitivity: ${sensitivity}, Threshold: ${threshold}`);
 
-  // PERFORMANCE FIX: Batch fetch all existing matches to avoid N+1 query problem
+  // Batch fetch existing matches to avoid N+1
   const leadIds = activeLeads.map(lead => lead.id);
   const allExistingMatches = await db.getMatchesByLeadIds(leadIds);
-
-  // Create a lookup map for O(1) access
   const matchesByLeadId = new Map<number, any[]>();
   for (const match of allExistingMatches) {
     if (!matchesByLeadId.has(match.leadId)) {
@@ -196,7 +181,6 @@ export async function runMatchingForNewInventory(
     if (matchResult.score >= threshold) {
       console.log(`[Matching] Match found! Lead "${lead.customerName}" (score: ${matchResult.score})`);
 
-      // Use pre-fetched matches from the lookup map
       const existingMatches = matchesByLeadId.get(lead.id) || [];
       const alreadyMatched = existingMatches.some(
         (m: any) => m.inventoryId === inventoryId && m.status !== "dismissed"
@@ -224,17 +208,13 @@ export async function runMatchingForNewInventory(
         status: "matched",
       });
 
-      let smsSent = false;
       let emailSent = false;
-      let smsError: string | undefined;
       let emailError: string | undefined;
       const managerEmail = dealership?.email || process.env.MANAGER_EMAIL || "";
-      const managerPhone = dealership?.phone || process.env.MANAGER_PHONE || "";
-
       const emailEnabled = prefs?.emailNotifications !== false;
-      const smsEnabled = prefs?.smsNotifications !== false;
 
-      if (emailEnabled) {
+      // Only send instant email for high-value matches (80+)
+      if (emailEnabled && matchResult.score >= HIGH_VALUE_THRESHOLD && managerEmail) {
         const emailResult = await sendEmail(
           managerEmail,
           lead,
@@ -245,53 +225,34 @@ export async function runMatchingForNewInventory(
         if (emailResult.success) {
           emailSent = true;
           notificationsSent++;
-          console.log(`[Matching] Manager Alert Email sent to ${managerEmail} regarding lead ${lead.customerName}`);
-
-          await db.updateMatch(match.id, {
-            status: "notified",
-            notificationSentAt: new Date(),
-            notificationMethod: "email",
-          });
-
-          await db.updateLead(lead.id, { status: "matched" });
-
-          // In-App Notification for the person who entered the lead
-          const salesperson = lead.salespersonName || "a salesperson";
-          await db.createInAppNotification({
-            dealershipId: dealershipId,
-            leadId: lead.id,
-            inventoryId: inventoryId,
-            matchId: match.id,
-            title: "New Match Found!",
-            message: `A potential match has been found for your lead ${lead.customerName} with unit ${unit.year} ${unit.make} ${unit.model}. (Entered by: ${salesperson})`,
-          });
+          console.log(`[Matching] High-value alert emailed to ${managerEmail} for lead ${lead.customerName} (score: ${matchResult.score})`);
         } else {
           emailError = emailResult.error;
-          console.log(`[Matching] Manager Email failed: ${emailError}`);
+          console.log(`[Matching] Email failed: ${emailError}`);
         }
       }
 
-      if (smsEnabled && !emailSent) {
-        const unitName = `${unit.year} ${unit.make} ${unit.model}`;
-        const smsBody = `🚐 Lead Match Alert: ${lead.customerName} matches a new ${unitName} (Score: ${matchResult.score}/100). Check CRM for details!`;
-        const smsResult = await sendSMS(managerPhone, smsBody);
-
-        if (smsResult.success) {
-          smsSent = true;
-          notificationsSent++;
-          console.log(`[Matching] Manager Alert SMS sent to ${managerPhone} regarding lead ${lead.customerName}`);
-
-          await db.updateMatch(match.id, {
-            status: "notified",
-            notificationSentAt: new Date(),
-            notificationMethod: "sms",
-          });
-          await db.updateLead(lead.id, { status: "matched" });
-        } else {
-          smsError = smsResult.error;
-          console.log(`[Matching] Manager SMS failed: ${smsError}`);
-        }
+      // Update match status
+      if (emailSent) {
+        await db.updateMatch(match.id, {
+          status: "notified",
+          notificationSentAt: new Date(),
+          notificationMethod: "email",
+        });
       }
+
+      await db.updateLead(lead.id, { status: "matched" });
+
+      // In-App Notification always
+      const salesperson = lead.salespersonName || "a salesperson";
+      await db.createInAppNotification({
+        dealershipId: dealershipId,
+        leadId: lead.id,
+        inventoryId: inventoryId,
+        matchId: match.id,
+        title: "New Match Found!",
+        message: `A potential match has been found for your lead ${lead.customerName} with unit ${unit.year} ${unit.make} ${unit.model}. (Entered by: ${salesperson})`,
+      });
 
       results.push({
         matchId: match.id,
@@ -301,9 +262,7 @@ export async function runMatchingForNewInventory(
         customerEmail: lead.customerEmail,
         score: matchResult.score,
         reasons: matchResult.reasons,
-        smsSent,
         emailSent,
-        smsError,
         emailError,
       });
     }
@@ -314,7 +273,7 @@ export async function runMatchingForNewInventory(
   }
 
   console.log(
-    `[Matching] Complete. ${results.length} matches found, ${notificationsSent} notifications sent (email + SMS)`
+    `[Matching] Complete. ${results.length} matches found, ${notificationsSent} emails sent`
   );
 
   return { matchesFound: results.length, notificationsSent, results };
@@ -330,11 +289,10 @@ export async function retryPendingNotifications(dealershipId: number) {
 
   console.log(`[Matching] Found ${pendingMatches.length} pending matches to retry`);
 
-  // Get dealership info for manager contact details
   const dealership = await db.getDealershipById(dealershipId);
   const prefs = await db.getDealershipPreferences(dealershipId);
   const emailEnabled = prefs?.emailNotifications !== false;
-  const smsEnabled = prefs?.smsNotifications !== false;
+  const managerEmail = dealership?.email || process.env.MANAGER_EMAIL || "";
 
   let sent = 0;
   for (const entry of pendingMatches) {
@@ -342,46 +300,24 @@ export async function retryPendingNotifications(dealershipId: number) {
     const unit = entry.unit;
     const matchRecord = entry.match;
 
-    const managerEmail = dealership?.email || process.env.MANAGER_EMAIL || "";
-    const managerPhone = dealership?.phone || process.env.MANAGER_PHONE || "";
-
-    let notified = false;
-    const reasons = [matchRecord.matchReason || ""];
-
-    if (emailEnabled) {
+    // Only retry email for high-value matches
+    if (emailEnabled && matchRecord.matchScore >= HIGH_VALUE_THRESHOLD && managerEmail) {
+      const reasons = [matchRecord.matchReason || ""];
       const emailResult = await sendEmail(managerEmail, lead, unit, matchRecord.matchScore, reasons);
       if (emailResult.success) {
-        notified = true;
-        console.log(`[Matching] Retry manager email alert sent to ${managerEmail} for lead ${lead.customerName}`);
+        sent++;
+        console.log(`[Matching] Retry email sent to ${managerEmail} for lead ${lead.customerName}`);
+        await db.updateMatch(matchRecord.id, {
+          status: "notified",
+          notificationSentAt: new Date(),
+          notificationMethod: "email",
+        });
+        await db.updateLead(lead.id, { status: "matched" });
       }
-    }
-
-    if (smsEnabled && !notified) {
-      const unitName = `${unit.year} ${unit.make} ${unit.model}`;
-      const message = `🚐 Retry Alert: Lead match found for ${lead.customerName} - ${unitName} (${matchRecord.matchScore}/100). Check CRM.`;
-      const smsResult = await sendSMS(managerPhone, message);
-      if (smsResult.success) {
-        notified = true;
-        console.log(`[Matching] Retry manager SMS alert sent to ${managerPhone} for lead ${lead.customerName}`);
-      }
-    }
-
-    if (notified) {
-      sent++;
-      let method: "email" | "sms" = "sms";
-      if (emailEnabled && lead.customerEmail) {
-        method = "email";
-      }
-      await db.updateMatch(matchRecord.id, {
-        status: "notified",
-        notificationSentAt: new Date(),
-        notificationMethod: method,
-      });
-      await db.updateLead(lead.id, { status: "matched" });
     }
   }
 
-  console.log(`[Matching] Retry complete. ${sent}/${pendingMatches.length} notifications sent`);
+  console.log(`[Matching] Retry complete. ${sent}/${pendingMatches.length} emails sent`);
   return { retried: pendingMatches.length, sent };
 }
 
@@ -391,12 +327,10 @@ export async function runMatchingForAllInventory(dealershipId: number) {
 
   console.log(`[Matching] Starting parallel scan of ${inStockUnits.length} units`);
 
-  // PERFORMANCE FIX: Process units in parallel with concurrency limiting
   const CONCURRENCY_LIMIT = 10;
   let totalMatches = 0;
   let totalNotifications = 0;
 
-  // Process in batches to avoid overwhelming the database
   for (let i = 0; i < inStockUnits.length; i += CONCURRENCY_LIMIT) {
     const batch = inStockUnits.slice(i, i + CONCURRENCY_LIMIT);
     const results = await Promise.all(
@@ -411,6 +345,6 @@ export async function runMatchingForAllInventory(dealershipId: number) {
     console.log(`[Matching] Processed ${Math.min(i + CONCURRENCY_LIMIT, inStockUnits.length)}/${inStockUnits.length} units`);
   }
 
-  console.log(`[Matching] Parallel scan complete: ${totalMatches} matches, ${totalNotifications} notifications`);
+  console.log(`[Matching] Parallel scan complete: ${totalMatches} matches, ${totalNotifications} emails`);
   return { totalMatches, totalNotifications, unitsScanned: inStockUnits.length };
 }

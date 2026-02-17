@@ -8,6 +8,7 @@ import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { appRouter } from "./routers";
 import { createContext } from "./trpc";
 import { seedDatabase } from "./seed";
+import { startDailyDigest } from "./daily-digest";
 import * as db from "./db";
 import { dealerships } from "../shared/schema";
 import { getDb } from "./db";
@@ -184,6 +185,9 @@ const server = app.listen(PORT, async () => {
 
   // Seed default data after tables are ready
   await seedDatabase();
+
+  // Start daily digest email scheduler
+  startDailyDigest();
 });
 
 export default app;

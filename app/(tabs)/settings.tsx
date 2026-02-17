@@ -77,7 +77,6 @@ export default function SettingsScreen() {
           <View style={{ gap: 12 }}>
             {[
               { label: "Email Notifications", key: "emailNotifications" },
-              { label: "SMS Notifications", key: "smsNotifications" },
               { label: "In-App Notifications", key: "inAppNotifications" },
             ].map((item) => (
               <View key={item.key} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
