@@ -1,0 +1,392 @@
+diff --git a/.env.example b/.env.example
+index c7d59a8..9afd694 100644
+--- a/.env.example
++++ b/.env.example
+@@ -1,21 +1,39 @@
+ # Environment Variables Template
+ # Copy this file to .env and fill in your values
+ 
+-# Database
++# Database (required)
+ DATABASE_URL=postgresql://user:password@localhost:5432/rv_crm
+ 
+-# Replit Connectors (for Twilio/SendGrid integration)
+-REPLIT_CONNECTORS_HOSTNAME=your-hostname.replit.dev
+-REPL_IDENTITY=your-repl-identity-token
+-WEB_REPL_RENEWAL=your-web-repl-renewal-token
+-
+ # Server Configuration
+ PORT=5000
+ NODE_ENV=development
+ 
+-# Optional: Direct API Keys (if not using Replit Connectors)
+-# TWILIO_ACCOUNT_SID=your-twilio-account-sid
+-# TWILIO_AUTH_TOKEN=your-twilio-auth-token
+-# TWILIO_PHONE_NUMBER=+1234567890
+-# SENDGRID_API_KEY=your-sendgrid-api-key
+-# SENDGRID_FROM_EMAIL=noreply@yourdomain.com
++# ============================================
++# Twilio SMS (pick ONE method)
++# ============================================
++
++# Option A: Direct API Keys (recommended for Railway/Render/production)
++TWILIO_ACCOUNT_SID=your-twilio-account-sid
++TWILIO_AUTH_TOKEN=your-twilio-auth-token
++TWILIO_PHONE_NUMBER=+1234567890
++
++# Option B: Replit Connectors (only if running on Replit)
++# REPLIT_CONNECTORS_HOSTNAME=your-hostname.replit.dev
++# REPL_IDENTITY=your-repl-identity-token
++# WEB_REPL_RENEWAL=your-web-repl-renewal-token
++
++# ============================================
++# SendGrid Email (pick ONE method)
++# ============================================
++
++# Option A: Direct API Keys (recommended for Railway/Render/production)
++SENDGRID_API_KEY=your-sendgrid-api-key
++SENDGRID_FROM_EMAIL=noreply@yourdomain.com
++
++# Option B: Replit Connectors (uses same Replit vars above)
++
++# ============================================
++# Manager Notifications (fallback if not set on dealership record)
++# ============================================
++MANAGER_EMAIL=jonathan@lotlink.io
++MANAGER_PHONE=+12538881117
+diff --git a/Dockerfile b/Dockerfile
+index c82e7d2..3c3372c 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -5,18 +5,17 @@ WORKDIR /app
+ # Copy package files
+ COPY package*.json ./
+ 
+-# Install dependencies
+-RUN npm ci --only=production
++# Install ALL dependencies (need drizzle-kit/drizzle-orm for migrations)
++RUN npm ci
+ 
+-# Copy server and shared files
++# Copy server, shared, public, and database migration files
+ COPY server ./server
+ COPY shared ./shared
+ COPY public ./public
++COPY drizzle ./drizzle
++COPY drizzle.config.ts ./
+ COPY tsconfig.json ./
+ 
+-# Build TypeScript
+-RUN npm install -g tsx
+-
+ # Expose port
+ EXPOSE 5000
+ 
+@@ -24,5 +23,5 @@ EXPOSE 5000
+ ENV NODE_ENV=production
+ ENV PORT=5000
+ 
+-# Start the server
++# Start the server (migrations run automatically on startup)
+ CMD ["npx", "tsx", "server/index.production.ts"]
+diff --git a/app/(tabs)/matches.tsx b/app/(tabs)/matches.tsx
+index bca5c87..a90e6f1 100644
+--- a/app/(tabs)/matches.tsx
++++ b/app/(tabs)/matches.tsx
+@@ -87,7 +87,7 @@ export default function MatchesScreen() {
+     onSuccess: (data) => {
+       setScanning(false);
+       refetch();
+-      const msg = `Scan complete! Found ${data.totalMatches} matches, sent ${data.totalNotifications} manager alerts to joanthan@lotlink.io.`;
++      const msg = `Scan complete! Found ${data.totalMatches} matches, sent ${data.totalNotifications} manager alerts.`;
+       if (Platform.OS === "web") {
+         window.alert(msg);
+       } else {
+@@ -207,7 +207,7 @@ export default function MatchesScreen() {
+         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+           <Text style={{ fontSize: 40, marginBottom: 16 }}>🔍</Text>
+           <Text style={{ color: "#7F8C8D", fontSize: 16, textAlign: "center" }}>
+-            No matches yet. Add leads and inventory - the system will alert verify and alert you automatically!
++            No matches yet. Add leads and inventory — the system will match and alert you automatically!
+           </Text>
+         </View>
+       ) : (
+diff --git a/app/login.tsx b/app/login.tsx
+index a724b38..48ca239 100644
+--- a/app/login.tsx
++++ b/app/login.tsx
+@@ -145,18 +145,6 @@ export default function LoginScreen() {
+               )}
+             </TouchableOpacity>
+ 
+-            <View
+-              style={{
+-                marginTop: 24,
+-                backgroundColor: "#FEF9E7",
+-                borderRadius: 8,
+-                padding: 16,
+-                borderWidth: 1,
+-                borderColor: "#F39C12",
+-              }}
+-            >
+-              {/* Test credentials removed for security - use seed script to create test accounts */}
+-            </View>
+           </View>
+ 
+           <View style={{ marginTop: 32, alignItems: "center" }}>
+diff --git a/lib/trpc.ts b/lib/trpc.ts
+index abeb815..56903c1 100644
+--- a/lib/trpc.ts
++++ b/lib/trpc.ts
+@@ -25,7 +25,8 @@ function getApiUrl(): string {
+     return "http://localhost:5000/api/trpc";
+   }
+ 
+-  // Production fallback - should be configured via EAS
++  // Production fallback - this should NEVER be hit if EAS env vars are set
++  console.error("[TRPC] WARNING: No API_URL configured. Set API_URL in eas.json production env.");
+   return "https://your-production-api.com/api/trpc";
+ }
+ 
+diff --git a/server/index.production.ts b/server/index.production.ts
+index ef20963..a529ab9 100644
+--- a/server/index.production.ts
++++ b/server/index.production.ts
+@@ -24,15 +24,24 @@ const allowedOrigins = [
+   process.env.FRONTEND_URL,
+ ].filter(Boolean) as string[];
+ 
+-// Rate limiting for authentication endpoints
++// Rate limiting for authentication endpoints only (strict)
+ const authLimiter = rateLimit({
+   windowMs: 15 * 60 * 1000, // 15 minutes
+-  max: 5, // Limit each IP to 5 requests per windowMs
++  max: 10, // 10 login attempts per 15 min per IP
+   message: "Too many login attempts, please try again later.",
+   standardHeaders: true,
+   legacyHeaders: false,
+ });
+ 
++// General API rate limiting (generous for normal app usage)
++const apiLimiter = rateLimit({
++  windowMs: 1 * 60 * 1000, // 1 minute
++  max: 200, // 200 requests per minute per IP
++  message: "Too many requests, please slow down.",
++  standardHeaders: true,
++  legacyHeaders: false,
++});
++
+ app.use(cors({
+   origin: (origin, callback) => {
+     // Allow requests with no origin (mobile apps, Postman, etc.)
+@@ -54,8 +63,12 @@ app.get("/api/health", (_req, res) => {
+   res.json({ status: "ok", timestamp: new Date().toISOString() });
+ });
+ 
+-// Apply rate limiting to tRPC endpoints (includes auth)
+-app.use("/api/trpc", authLimiter);
++// Apply strict rate limiting only to auth endpoints
++app.use("/api/trpc/auth.login", authLimiter);
++app.use("/api/trpc/auth.logout", authLimiter);
++
++// Apply general rate limiting to all tRPC endpoints
++app.use("/api/trpc", apiLimiter);
+ 
+ app.use(
+   "/api/trpc",
+@@ -149,12 +162,24 @@ const server = app.listen(PORT, async () => {
+   // Run database migrations to create tables if they don't exist
+   try {
+     console.log("[DB] Running migrations...");
+-    const database = getDb();
+-    await migrate(database, { migrationsFolder: path.join(__dirname, "../drizzle") });
+-    console.log("[DB] Migrations complete");
++    const migrationsPath = path.join(__dirname, "../drizzle");
++    const fs = await import("fs");
++    if (fs.existsSync(migrationsPath)) {
++      const database = getDb();
++      await migrate(database, { migrationsFolder: migrationsPath });
++      console.log("[DB] Migrations complete");
++    } else {
++      console.warn("[DB] Migrations folder not found at:", migrationsPath);
++      console.warn("[DB] Skipping migrations — tables should already exist");
++    }
+   } catch (error: any) {
+-    console.error("[DB] Migration error:", error.message);
+-    process.exit(1);
++    // Don't crash if tables already exist — migration will throw on re-run
++    if (error.message?.includes("already exists")) {
++      console.log("[DB] Tables already exist, skipping migrations");
++    } else {
++      console.error("[DB] Migration error:", error.message);
++      process.exit(1);
++    }
+   }
+ 
+   // Seed default data after tables are ready
+diff --git a/server/index.ts b/server/index.ts
+index 78a616e..14ee2ec 100644
+--- a/server/index.ts
++++ b/server/index.ts
+@@ -16,15 +16,24 @@ const app = express();
+ const PORT = 5000;
+ const EXPO_PORT = 8081;
+ 
+-// Rate limiting for authentication endpoints
++// Rate limiting for authentication endpoints only (strict)
+ const authLimiter = rateLimit({
+   windowMs: 15 * 60 * 1000, // 15 minutes
+-  max: 5, // Limit each IP to 5 requests per windowMs
++  max: 10, // 10 login attempts per 15 min per IP
+   message: "Too many login attempts, please try again later.",
+   standardHeaders: true,
+   legacyHeaders: false,
+ });
+ 
++// General API rate limiting
++const apiLimiter = rateLimit({
++  windowMs: 1 * 60 * 1000, // 1 minute
++  max: 200,
++  message: "Too many requests, please slow down.",
++  standardHeaders: true,
++  legacyHeaders: false,
++});
++
+ app.use(cors({
+   origin: true,
+   credentials: true,
+@@ -32,8 +41,12 @@ app.use(cors({
+ app.use(cookieParser());
+ app.use(express.json());
+ 
+-// Apply rate limiting to tRPC endpoints (includes auth)
+-app.use("/api/trpc", authLimiter);
++// Apply strict rate limiting only to auth endpoints
++app.use("/api/trpc/auth.login", authLimiter);
++app.use("/api/trpc/auth.logout", authLimiter);
++
++// Apply general rate limiting to all tRPC endpoints
++app.use("/api/trpc", apiLimiter);
+ 
+ app.use(
+   "/api/trpc",
+diff --git a/server/matching-engine.ts b/server/matching-engine.ts
+index 43722ee..1018fa4 100644
+--- a/server/matching-engine.ts
++++ b/server/matching-engine.ts
+@@ -165,6 +165,8 @@ export async function runMatchingForNewInventory(
+   const activeLeads = await db.getAllDealershipLeads(dealershipId);
+   console.log(`[Matching] Scanning ${activeLeads.length} active leads against ${unit.year} ${unit.make} ${unit.model}`);
+ 
++  // Get dealership info for manager contact details
++  const dealership = await db.getDealershipById(dealershipId);
+   const prefs = await db.getDealershipPreferences(dealershipId);
+   const sensitivity = prefs?.matchingSensitivity || "moderate";
+   const threshold = getMatchThreshold(sensitivity);
+@@ -226,8 +228,8 @@ export async function runMatchingForNewInventory(
+       let emailSent = false;
+       let smsError: string | undefined;
+       let emailError: string | undefined;
+-      const managerEmail = "joanthan@lotlink.io";
+-      const managerPhone = "5551234567"; // Mock manager phone
++      const managerEmail = dealership?.email || process.env.MANAGER_EMAIL || "";
++      const managerPhone = dealership?.phone || process.env.MANAGER_PHONE || "";
+ 
+       const emailEnabled = prefs?.emailNotifications !== false;
+       const smsEnabled = prefs?.smsNotifications !== false;
+@@ -328,6 +330,8 @@ export async function retryPendingNotifications(dealershipId: number) {
+ 
+   console.log(`[Matching] Found ${pendingMatches.length} pending matches to retry`);
+ 
++  // Get dealership info for manager contact details
++  const dealership = await db.getDealershipById(dealershipId);
+   const prefs = await db.getDealershipPreferences(dealershipId);
+   const emailEnabled = prefs?.emailNotifications !== false;
+   const smsEnabled = prefs?.smsNotifications !== false;
+@@ -338,8 +342,8 @@ export async function retryPendingNotifications(dealershipId: number) {
+     const unit = entry.unit;
+     const matchRecord = entry.match;
+ 
+-    const managerEmail = "joanthan@lotlink.io";
+-    const managerPhone = "5551234567"; // Mock manager phone
++    const managerEmail = dealership?.email || process.env.MANAGER_EMAIL || "";
++    const managerPhone = dealership?.phone || process.env.MANAGER_PHONE || "";
+ 
+     let notified = false;
+     const reasons = [matchRecord.matchReason || ""];
+diff --git a/server/sendgrid.ts b/server/sendgrid.ts
+index 0c2aff6..021c6f2 100644
+--- a/server/sendgrid.ts
++++ b/server/sendgrid.ts
+@@ -1,6 +1,16 @@
+ import sgMail from "@sendgrid/mail";
+ 
+ async function getCredentials() {
++  // Priority 1: Direct env vars (Railway, Render, any standard hosting)
++  if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM_EMAIL) {
++    console.log(`[SendGrid] Connected via env vars - From: ${process.env.SENDGRID_FROM_EMAIL}`);
++    return {
++      apiKey: process.env.SENDGRID_API_KEY,
++      fromEmail: process.env.SENDGRID_FROM_EMAIL,
++    };
++  }
++
++  // Priority 2: Replit Connectors (only when running on Replit)
+   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+   const xReplitToken = process.env.REPL_IDENTITY
+     ? "repl " + process.env.REPL_IDENTITY
+@@ -8,8 +18,8 @@ async function getCredentials() {
+       ? "depl " + process.env.WEB_REPL_RENEWAL
+       : null;
+ 
+-  if (!xReplitToken) {
+-    throw new Error("X_REPLIT_TOKEN not found for repl/depl");
++  if (!hostname || !xReplitToken) {
++    throw new Error("SendGrid not configured. Set SENDGRID_API_KEY and SENDGRID_FROM_EMAIL env vars.");
+   }
+ 
+   const connUrl =
+diff --git a/server/twilio.ts b/server/twilio.ts
+index a5bfe48..de8760d 100644
+--- a/server/twilio.ts
++++ b/server/twilio.ts
+@@ -10,6 +10,19 @@ let cachedCredentials: {
+ async function getCredentials() {
+   if (cachedCredentials) return cachedCredentials;
+ 
++  // Priority 1: Direct env vars (Railway, Render, any standard hosting)
++  if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
++    cachedCredentials = {
++      accountSid: process.env.TWILIO_ACCOUNT_SID,
++      apiKey: process.env.TWILIO_AUTH_TOKEN,
++      apiKeySecret: "",
++      phoneNumber: process.env.TWILIO_PHONE_NUMBER || "",
++    };
++    console.log(`[Twilio] Connected via env vars - Phone: ${cachedCredentials.phoneNumber}`);
++    return cachedCredentials;
++  }
++
++  // Priority 2: Replit Connectors (only when running on Replit)
+   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+   const xReplitToken = process.env.REPL_IDENTITY
+     ? "repl " + process.env.REPL_IDENTITY
+@@ -17,8 +30,8 @@ async function getCredentials() {
+       ? "depl " + process.env.WEB_REPL_RENEWAL
+       : null;
+ 
+-  if (!xReplitToken) {
+-    throw new Error("X_REPLIT_TOKEN not found for repl/depl");
++  if (!hostname || !xReplitToken) {
++    throw new Error("Twilio not configured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER env vars.");
+   }
+ 
+   const connUrl = "https://" + hostname + "/api/v2/connection?include_secrets=true&connector_names=twilio";
+@@ -45,7 +58,7 @@ async function getCredentials() {
+   }
+ 
+   cachedCredentials = { accountSid, apiKey, apiKeySecret, phoneNumber };
+-  console.log(`[Twilio] Connected - Phone: ${phoneNumber}`);
++  console.log(`[Twilio] Connected via Replit - Phone: ${phoneNumber}`);
+   return cachedCredentials;
+ }
+ 
