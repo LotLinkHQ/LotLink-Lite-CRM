@@ -23,7 +23,7 @@
                 "buildType": "apk"
             },
             "env": {
-                "API_URL": "https://fxgmbd6h.up.railway.app"
+                "API_URL": "https://rv-sales-crm-api-production-ee7c.up.railway.app"
             }
         },
         "production": {
@@ -35,7 +35,7 @@
                 "buildType": "app-bundle"
             },
             "env": {
-                "API_URL": "https://fxgmbd6h.up.railway.app"
+                "API_URL": "https://rv-sales-crm-api-production-ee7c.up.railway.app"
             },
             "autoIncrement": true
         }
