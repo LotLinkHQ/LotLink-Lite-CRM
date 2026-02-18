@@ -4,6 +4,7 @@ import * as db from "./db";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { runMatchingForNewInventory, runMatchingForAllInventory, retryPendingNotifications } from "./matching-engine";
+import { scrapeInventoryFromWebsite } from "./inventory-scraper";
 
 export const appRouter = router({
   auth: router({
@@ -60,6 +61,43 @@ export const appRouter = router({
       ctx.res.clearCookie("dealership_session", { path: "/" });
       return { success: true };
     }),
+  }),
+
+  dealership: router({
+    get: protectedProcedure.query(async ({ ctx }) => {
+      const d = await db.getDealershipById(ctx.dealership.id);
+      if (!d) return null;
+      return {
+        id: d.id,
+        name: d.name,
+        username: d.username,
+        email: d.email,
+        phone: d.phone,
+        address: d.address,
+        websiteUrl: d.websiteUrl,
+        lastScrapedAt: d.lastScrapedAt,
+      };
+    }),
+    updateWebsite: protectedProcedure
+      .input(z.object({ websiteUrl: z.string().min(1).max(500) }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateDealership(ctx.dealership.id, {
+          websiteUrl: input.websiteUrl,
+        });
+        return { success: true };
+      }),
+    syncInventory: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const dealership = await db.getDealershipById(ctx.dealership.id);
+        if (!dealership?.websiteUrl) {
+          return { success: false, error: "No website URL configured" };
+        }
+        const result = await scrapeInventoryFromWebsite(
+          ctx.dealership.id,
+          dealership.websiteUrl
+        );
+        return result;
+      }),
   }),
 
   leads: router({

@@ -9,6 +9,7 @@ import { appRouter } from "./routers";
 import { createContext } from "./trpc";
 import { seedDatabase } from "./seed";
 import { startDailyDigest } from "./daily-digest";
+import { startInventorySyncScheduler } from "./inventory-scraper";
 import * as db from "./db";
 import { dealerships } from "../shared/schema";
 import { getDb } from "./db";
@@ -188,6 +189,9 @@ const server = app.listen(PORT, async () => {
 
   // Start daily digest email scheduler
   startDailyDigest();
+
+  // Start inventory sync scheduler (scrapes dealership websites every 24h)
+  startInventorySyncScheduler();
 });
 
 export default app;

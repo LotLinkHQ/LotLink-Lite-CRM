@@ -321,6 +321,20 @@ export async function markNotificationAsRead(id: number) {
     .where(eq(inAppNotifications.id, id));
 }
 
+export async function updateDealership(id: number, data: Partial<InsertDealership>) {
+  const db = getDb();
+  await db.update(dealerships).set({ ...data, updatedAt: new Date() }).where(eq(dealerships.id, id));
+}
+
+export async function getInventoryByUnitId(unitId: string, dealershipId: number) {
+  const db = getDb();
+  const result = await db
+    .select()
+    .from(inventory)
+    .where(and(eq(inventory.unitId, unitId), eq(inventory.dealershipId, dealershipId)));
+  return result[0] || null;
+}
+
 export async function getUnreadNotificationCount(dealershipId: number) {
   const db = getDb();
   const result = await db
