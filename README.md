@@ -153,8 +153,8 @@ Recent optimizations provide **10-100x performance improvement**:
 
 ```sql
 dealerships → leads → matches ← inventory
-                ↓
-         match_history
+                 ↓
+          match_history
 ```
 
 Run migrations:
@@ -221,3 +221,15 @@ For issues or questions:
 ---
 
 **Built with ❤️ for RV dealerships**
+
+---
+
+## Copyright & License
+
+© 2026 **LotLink Inc**. All rights reserved.
+
+This software is proprietary and confidential. Unauthorized copying, modification, distribution, or use of this software or any of its contents is strictly prohibited.
+
+For licensing inquiries, please contact LotLink Inc.
+
+**See the [LICENSE](LICENSE) file for full details.**
