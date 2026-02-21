@@ -15,6 +15,39 @@ import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useDealershipAuth } from "@/hooks/use-dealership-auth";
 
+const QUICK_TEMPLATES = [
+  {
+    label: "Class A Buyer",
+    emoji: "🚌",
+    defaults: { preferenceType: "features" as const, preferredMake: "", preferredModel: "", notes: "Looking for a Class A motorhome" },
+  },
+  {
+    label: "Class C Buyer",
+    emoji: "🚐",
+    defaults: { preferenceType: "features" as const, preferredMake: "", preferredModel: "", notes: "Looking for a Class C motorhome" },
+  },
+  {
+    label: "5th Wheel",
+    emoji: "🏕️",
+    defaults: { preferenceType: "features" as const, preferredMake: "", preferredModel: "", notes: "Looking for a 5th wheel" },
+  },
+  {
+    label: "Travel Trailer",
+    emoji: "🏠",
+    defaults: { preferenceType: "features" as const, preferredMake: "", preferredModel: "", notes: "Looking for a travel trailer" },
+  },
+  {
+    label: "Specific Model",
+    emoji: "🎯",
+    defaults: { preferenceType: "model" as const, preferredMake: "", preferredModel: "", notes: "" },
+  },
+  {
+    label: "Custom Lead",
+    emoji: "✏️",
+    defaults: { preferenceType: "features" as const, preferredMake: "", preferredModel: "", notes: "" },
+  },
+];
+
 export default function LeadsScreen() {
   const { isAuthenticated } = useDealershipAuth();
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,26 +91,30 @@ export default function LeadsScreen() {
     onSuccess: () => {
       utils.leads.list.invalidate();
       setShowAddModal(false);
-      setNewLead({
-        customerName: "",
-        customerEmail: "",
-        customerPhone: "",
-        preferenceType: "model",
-        preferredModel: "",
-        preferredYear: "",
-        maxPrice: "",
-        preferredMake: "",
-        preferredBedType: "",
-        minLength: "",
-        notes: "",
-        salespersonName: "",
-      });
+      resetForm();
     },
   });
 
   const deleteMutation = trpc.leads.delete.useMutation({
     onSuccess: () => utils.leads.list.invalidate(),
   });
+
+  const resetForm = () => {
+    setNewLead({
+      customerName: "",
+      customerEmail: "",
+      customerPhone: "",
+      preferenceType: "model",
+      preferredModel: "",
+      preferredYear: "",
+      maxPrice: "",
+      preferredMake: "",
+      preferredBedType: "",
+      minLength: "",
+      notes: "",
+      salespersonName: "",
+    });
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -101,6 +138,18 @@ export default function LeadsScreen() {
         { text: "Delete", onPress: doDelete, style: "destructive" },
       ]);
     }
+  };
+
+  const openAddWithTemplate = (template: (typeof QUICK_TEMPLATES)[number]) => {
+    resetForm();
+    setNewLead((prev) => ({
+      ...prev,
+      preferenceType: template.defaults.preferenceType,
+      preferredMake: template.defaults.preferredMake,
+      preferredModel: template.defaults.preferredModel,
+      notes: template.defaults.notes,
+    }));
+    setShowAddModal(true);
   };
 
   const handleAddLead = () => {
@@ -158,47 +207,62 @@ export default function LeadsScreen() {
 
   return (
     <ScreenContainer>
-      <View style={{ marginBottom: 16 }}>
-        <Text style={{ fontSize: 24, fontWeight: "bold", color: "#2C3E50", marginBottom: 16 }}>
-          Leads
-        </Text>
+      {/* Header */}
+      <Text style={{ fontSize: 24, fontWeight: "bold", color: "#2C3E50", marginBottom: 16 }}>
+        Leads
+      </Text>
 
-        <TextInput
-          placeholder="Search leads..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          style={{
-            backgroundColor: "#FFFFFF",
-            borderWidth: 1,
-            borderColor: "#ECF0F1",
-            borderRadius: 8,
-            paddingHorizontal: 16,
-            paddingVertical: 10,
-            color: "#2C3E50",
-            marginBottom: 12,
-            fontSize: 16,
-          }}
-          placeholderTextColor="#7F8C8D"
-        />
-
-        <TouchableOpacity
-          onPress={() => setShowAddModal(true)}
-          style={{
-            backgroundColor: "#0B5E7E",
-            borderRadius: 8,
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ color: "white", fontWeight: "600" }}>+ Add New Lead</Text>
-        </TouchableOpacity>
+      {/* Quick-add tiles */}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
+        {QUICK_TEMPLATES.map((t) => (
+          <TouchableOpacity
+            key={t.label}
+            onPress={() => openAddWithTemplate(t)}
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: 12,
+              paddingVertical: 14,
+              paddingHorizontal: 12,
+              borderWidth: 1,
+              borderColor: "#ECF0F1",
+              width: "48%",
+              flexGrow: 1,
+              flexBasis: "45%",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontSize: 28, marginBottom: 4 }}>{t.emoji}</Text>
+            <Text style={{ color: "#2C3E50", fontWeight: "600", fontSize: 13, textAlign: "center" }}>
+              {t.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
+      {/* Search (compact) */}
+      <TextInput
+        placeholder="Search leads..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        style={{
+          backgroundColor: "#FFFFFF",
+          borderWidth: 1,
+          borderColor: "#ECF0F1",
+          borderRadius: 8,
+          paddingHorizontal: 16,
+          paddingVertical: 10,
+          color: "#2C3E50",
+          marginBottom: 12,
+          fontSize: 15,
+        }}
+        placeholderTextColor="#7F8C8D"
+      />
+
+      {/* Leads list */}
       {filteredLeads.length === 0 ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
           <Text style={{ color: "#7F8C8D", fontSize: 16 }}>
-            {searchQuery ? "No leads found" : "No leads yet. Add one to get started!"}
+            {searchQuery ? "No leads found" : "No leads yet. Tap a tile above to add one!"}
           </Text>
         </View>
       ) : (
@@ -209,13 +273,13 @@ export default function LeadsScreen() {
           onRefresh={handleRefresh}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
-          ListFooterComponent={() => (
+          ListFooterComponent={() =>
             isFetchingNextPage ? (
               <View style={{ paddingVertical: 20 }}>
                 <ActivityIndicator color="#0B5E7E" />
               </View>
             ) : null
-          )}
+          }
           renderItem={({ item }) => (
             <View
               style={{
@@ -289,6 +353,7 @@ export default function LeadsScreen() {
         />
       )}
 
+      {/* Add Lead Modal */}
       <Modal visible={showAddModal} animationType="slide" transparent>
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", padding: 20 }}>
           <ScrollView style={{ maxHeight: "80%" }}>
@@ -300,7 +365,7 @@ export default function LeadsScreen() {
               {[
                 { label: "Customer Name *", key: "customerName", placeholder: "Enter name" },
                 { label: "Phone (for SMS alerts) *", key: "customerPhone", placeholder: "e.g., 555-123-4567" },
-                { label: "Enters as (Your Name) *", key: "salespersonName", placeholder: "Who is adding this customer?" },
+                { label: "Your Name *", key: "salespersonName", placeholder: "Who is adding this customer?" },
                 { label: "Email", key: "customerEmail", placeholder: "Enter email" },
                 { label: "Preferred Make", key: "preferredMake", placeholder: "e.g., Tiffin, Winnebago, Thor" },
                 { label: "Preferred Model", key: "preferredModel", placeholder: "e.g., Allegro Bus 45OPP" },

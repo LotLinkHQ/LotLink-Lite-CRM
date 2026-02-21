@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { runMatchingForNewInventory, runMatchingForAllInventory, retryPendingNotifications } from "./matching-engine";
 import { scrapeInventoryFromWebsite } from "./inventory-scraper";
+import { askAboutInventory, isClaudeConfigured } from "./claude";
+import { buildInventoryContext } from "./inventory-context";
 
 export const appRouter = router({
   auth: router({
@@ -392,6 +394,33 @@ export const appRouter = router({
           });
         }
         return db.getDealershipPreferences(ctx.dealership.id);
+      }),
+  }),
+
+  ai: router({
+    ask: protectedProcedure
+      .input(
+        z.object({
+          question: z.string().min(1).max(2000),
+          conversationHistory: z
+            .array(
+              z.object({
+                role: z.enum(["user", "assistant"]),
+                content: z.string(),
+              })
+            )
+            .optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        if (!isClaudeConfigured()) {
+          return {
+            answer: "",
+            error: "AI assistant is not configured. Ask your admin to set the ANTHROPIC_API_KEY.",
+          };
+        }
+        const context = await buildInventoryContext(ctx.dealership.id);
+        return askAboutInventory(input.question, context, input.conversationHistory);
       }),
   }),
 

@@ -14,10 +14,12 @@
     "build:all": "eas build --platform all",
     "submit:ios": "eas submit --platform ios",
     "submit:android": "eas submit --platform android",
+    "build:web": "npx expo export --platform web --output-dir dist",
     "db:push": "npx drizzle-kit push",
     "db:migrate": "npx drizzle-kit migrate"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
     "@expo/metro-runtime": "~4.0.1",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@sendgrid/mail": "^8.1.6",

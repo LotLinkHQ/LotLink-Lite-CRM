@@ -1,27 +1,33 @@
-FROM node:20-alpine
+# Stage 1: Build Expo web frontend
+FROM node:20-alpine AS web-builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npx expo export --platform web --output-dir dist
 
+# Stage 2: Production server
+FROM node:20-alpine
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
+RUN npm ci --omit=dev 2>/dev/null || npm ci
 
-# Install all dependencies (tsx/typescript needed at runtime)
-RUN npm ci
-
-# Copy server, shared, public, and migration files
+# Copy server, shared, and config files
 COPY server ./server
 COPY shared ./shared
 COPY public ./public
 COPY drizzle ./drizzle
 COPY drizzle.config.ts ./
 COPY tsconfig.json ./
+COPY poulsbo-rv-inventory.json ./
 
-# Expose port
+# Copy built web frontend from stage 1
+COPY --from=web-builder /app/dist ./dist
+
 EXPOSE 5000
 
-# Set environment
 ENV NODE_ENV=production
 ENV PORT=5000
 
-# Start the server
 CMD ["npx", "tsx", "server/index.production.ts"]

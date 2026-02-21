@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import path from "path";
 import cors from "cors";
@@ -23,6 +24,8 @@ const allowedOrigins = [
   "http://localhost:8081",
   "https://lotlink.app",
   "https://www.lotlink.app",
+  "https://lotlink.org",
+  "https://www.lotlink.org",
   process.env.FRONTEND_URL,
 ].filter(Boolean) as string[];
 
@@ -156,6 +159,15 @@ app.post("/api/opt-in", async (req, res) => {
     console.error("[Opt-In] Error:", error.message);
     res.status(500).json({ success: false, error: "Something went wrong. Please try again." });
   }
+});
+
+// Serve Expo web build (static files)
+const distPath = path.join(__dirname, "../dist");
+app.use(express.static(distPath));
+
+// SPA fallback — serve index.html for all non-API routes
+app.get("*", (req, res) => {
+  res.sendFile(path.join(distPath, "index.html"));
 });
 
 const server = app.listen(PORT, async () => {

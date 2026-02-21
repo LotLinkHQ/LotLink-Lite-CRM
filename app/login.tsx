@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -15,7 +15,14 @@ import { useDealershipAuth } from "@/hooks/use-dealership-auth";
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, loading: authLoading } = useDealershipAuth();
+  const { login, loading: authLoading, isAuthenticated } = useDealershipAuth();
+
+  // Auto-redirect if already authenticated (e.g. demo mode)
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.replace("/(tabs)");
+    }
+  }, [isAuthenticated, authLoading]);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);

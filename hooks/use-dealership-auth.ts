@@ -9,7 +9,7 @@ export interface DealershipInfo {
 
 export function useDealershipAuth() {
   const utils = trpc.useUtils();
-  const { data: me, isLoading: meLoading } = trpc.auth.me.useQuery();
+  const { data: me, isLoading: meLoading, error: meError } = trpc.auth.me.useQuery();
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: () => {
@@ -51,6 +51,7 @@ export function useDealershipAuth() {
     user: me as DealershipInfo | null,
     loading: meLoading,
     error: loginMutation.error,
+    meError,
     isAuthenticated,
     login,
     logout,

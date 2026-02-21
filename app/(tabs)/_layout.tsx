@@ -43,6 +43,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="assistant"
+        options={{
+          title: "AI Assistant",
+          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🤖</Text>,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
