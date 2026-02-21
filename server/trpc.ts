@@ -10,6 +10,11 @@ export interface Context {
 }
 
 export async function createContext(req: Request, res: Response): Promise<Context> {
+  // In demo mode (no database), auto-login as Poulsbo RV
+  if (db.isUsingJsonFallback()) {
+    return { req, res, dealership: { id: 1, username: "demo", name: "Poulsbo RV" } };
+  }
+
   const sessionToken = req.cookies?.dealership_session;
   let dealership = null;
 

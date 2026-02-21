@@ -1,7 +1,12 @@
 import bcrypt from "bcryptjs";
-import { getDb, getDealershipByUsername, createDealership } from "./db";
+import { getDb, getDealershipByUsername, createDealership, isUsingJsonFallback } from "./db";
 
 export async function seedDatabase() {
+  if (isUsingJsonFallback()) {
+    console.log("[Seed] Skipping seed (no database)");
+    return;
+  }
+
   try {
     const existing = await getDealershipByUsername("test123");
     if (existing) {

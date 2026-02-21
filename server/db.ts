@@ -21,15 +21,20 @@ import {
   inAppNotifications,
   InsertInAppNotification,
 } from "../shared/schema";
+import { readFileSync, existsSync } from "fs";
+import { join } from "path";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+const _useJsonFallback = !process.env.DATABASE_URL;
+
+if (_useJsonFallback) {
+  console.log("[DB] No DATABASE_URL set — using JSON file for inventory data");
+}
 
 export function getDb() {
   if (!_db) {
     if (!process.env.DATABASE_URL) {
-      throw new Error(
-        "DATABASE_URL is not set. Please create a .env file based on .env.example and provide a valid PostgreSQL connection string."
-      );
+      return null as any;
     }
     const client = postgres(process.env.DATABASE_URL);
     _db = drizzle(client);
@@ -37,7 +42,44 @@ export function getDb() {
   return _db;
 }
 
+export function isUsingJsonFallback() {
+  return _useJsonFallback;
+}
+
+// Load inventory from JSON file when no database is available
+function loadInventoryFromJson() {
+  const jsonPath = join(process.cwd(), "poulsbo-rv-inventory.json");
+  if (!existsSync(jsonPath)) return [];
+
+  const raw = JSON.parse(readFileSync(jsonPath, "utf-8"));
+  return raw.map((rv: any, index: number) => ({
+    id: index + 1,
+    dealershipId: 1,
+    vin: rv.vin || null,
+    unitId: rv.stock_number || rv.vin || `PRV-${index + 1}`,
+    year: rv.year || 2024,
+    make: rv.make || "Unknown",
+    model: (rv.model || "Unknown") + (rv.trim ? " " + rv.trim : ""),
+    length: rv.length_ft ? String(rv.length_ft) : null,
+    weight: rv.weight_lbs ? String(rv.weight_lbs) : null,
+    bedType: null as string | null,
+    bedCount: null as number | null,
+    amenities: rv.features || null,
+    bathrooms: null as string | null,
+    slideOutCount: rv.slides || null,
+    fuelType: rv.fuel_type || null,
+    horsepower: null as number | null,
+    price: rv.price ? String(rv.price) : null,
+    status: "in_stock" as const,
+    storeLocation: rv.location || "Poulsbo RV",
+    arrivalDate: new Date(rv.scraped_at || Date.now()),
+    createdAt: new Date(rv.scraped_at || Date.now()),
+    updatedAt: new Date(rv.updated_at || rv.scraped_at || Date.now()),
+  }));
+}
+
 export async function getUserLeads(dealershipId: number, cursor?: number, limit: number = 50) {
+  if (_useJsonFallback) return [];
   const db = getDb();
   let whereClause = eq(leads.dealershipId, dealershipId);
 
@@ -54,28 +96,33 @@ export async function getUserLeads(dealershipId: number, cursor?: number, limit:
 }
 
 export async function getLeadById(id: number) {
+  if (_useJsonFallback) return null;
   const db = getDb();
   const result = await db.select().from(leads).where(eq(leads.id, id));
   return result[0] || null;
 }
 
 export async function createLead(data: InsertLead) {
+  if (_useJsonFallback) return null;
   const db = getDb();
   const result = await db.insert(leads).values(data).returning();
   return result[0];
 }
 
 export async function updateLead(id: number, data: Partial<InsertLead>) {
+  if (_useJsonFallback) return;
   const db = getDb();
   await db.update(leads).set({ ...data, updatedAt: new Date() }).where(eq(leads.id, id));
 }
 
 export async function deleteLead(id: number) {
+  if (_useJsonFallback) return;
   const db = getDb();
   await db.delete(leads).where(eq(leads.id, id));
 }
 
 export async function searchLeads(dealershipId: number, query: string) {
+  if (_useJsonFallback) return [];
   const db = getDb();
   return db
     .select()
@@ -90,6 +137,11 @@ export async function searchLeads(dealershipId: number, query: string) {
 }
 
 export async function getUserInventory(dealershipId: number, cursor?: number, limit: number = 50) {
+  if (_useJsonFallback) {
+    const all = loadInventoryFromJson();
+    const startIndex = cursor ? cursor : 0;
+    return all.slice(startIndex, startIndex + limit + 1);
+  }
   const db = getDb();
   let whereClause = eq(inventory.dealershipId, dealershipId);
 
@@ -106,28 +158,36 @@ export async function getUserInventory(dealershipId: number, cursor?: number, li
 }
 
 export async function getInventoryById(id: number) {
+  if (_useJsonFallback) {
+    const all = loadInventoryFromJson();
+    return all.find((item: any) => item.id === id) || null;
+  }
   const db = getDb();
   const result = await db.select().from(inventory).where(eq(inventory.id, id));
   return result[0] || null;
 }
 
 export async function createInventory(data: InsertInventory) {
+  if (_useJsonFallback) return null;
   const db = getDb();
   const result = await db.insert(inventory).values(data).returning();
   return result[0];
 }
 
 export async function updateInventory(id: number, data: Partial<InsertInventory>) {
+  if (_useJsonFallback) return;
   const db = getDb();
   await db.update(inventory).set({ ...data, updatedAt: new Date() }).where(eq(inventory.id, id));
 }
 
 export async function deleteInventory(id: number) {
+  if (_useJsonFallback) return;
   const db = getDb();
   await db.delete(inventory).where(eq(inventory.id, id));
 }
 
 export async function getMatchesByLeadId(leadId: number) {
+  if (_useJsonFallback) return [];
   const db = getDb();
   return db
     .select()
@@ -137,6 +197,7 @@ export async function getMatchesByLeadId(leadId: number) {
 }
 
 export async function getMatchesByLeadIds(leadIds: number[]) {
+  if (_useJsonFallback) return [];
   const db = getDb();
   if (leadIds.length === 0) return [];
   return db
@@ -151,6 +212,7 @@ export async function getMatchesByLeadIds(leadIds: number[]) {
 }
 
 export async function getMatchesByInventoryId(inventoryId: number) {
+  if (_useJsonFallback) return [];
   const db = getDb();
   return db
     .select()
@@ -160,28 +222,33 @@ export async function getMatchesByInventoryId(inventoryId: number) {
 }
 
 export async function createMatch(data: InsertMatch) {
+  if (_useJsonFallback) return null;
   const db = getDb();
   const result = await db.insert(matches).values(data).returning();
   return result[0];
 }
 
 export async function updateMatch(id: number, data: Partial<InsertMatch>) {
+  if (_useJsonFallback) return;
   const db = getDb();
   await db.update(matches).set({ ...data, updatedAt: new Date() }).where(eq(matches.id, id));
 }
 
 export async function getMatchById(id: number) {
+  if (_useJsonFallback) return null;
   const db = getDb();
   const result = await db.select().from(matches).where(eq(matches.id, id));
   return result[0] || null;
 }
 
 export async function createMatchHistory(data: InsertMatchHistory) {
+  if (_useJsonFallback) return;
   const db = getDb();
   await db.insert(matchHistory).values(data);
 }
 
 export async function getMatchHistoryByLeadId(leadId: number) {
+  if (_useJsonFallback) return [];
   const db = getDb();
   return db
     .select()
@@ -191,6 +258,7 @@ export async function getMatchHistoryByLeadId(leadId: number) {
 }
 
 export async function getDealershipPreferences(dealershipId: number) {
+  if (_useJsonFallback) return null;
   const db = getDb();
   const result = await db
     .select()
@@ -200,6 +268,7 @@ export async function getDealershipPreferences(dealershipId: number) {
 }
 
 export async function createDealershipPreferences(data: InsertDealershipPreferences) {
+  if (_useJsonFallback) return;
   const db = getDb();
   await db.insert(dealershipPreferences).values(data);
 }
@@ -208,6 +277,7 @@ export async function updateDealershipPreferences(
   dealershipId: number,
   data: Partial<InsertDealershipPreferences>
 ) {
+  if (_useJsonFallback) return;
   const db = getDb();
   await db
     .update(dealershipPreferences)
@@ -216,6 +286,12 @@ export async function updateDealershipPreferences(
 }
 
 export async function getDealershipByUsername(username: string) {
+  if (_useJsonFallback) {
+    if (username === "demo") {
+      return { id: 1, username: "demo", name: "Poulsbo RV", passwordHash: "", email: null, phone: null, address: null, numberOfStores: 1, stores: ["Poulsbo RV"], createdAt: new Date(), updatedAt: new Date() };
+    }
+    return null;
+  }
   const db = getDb();
   const result = await db
     .select()
@@ -225,6 +301,12 @@ export async function getDealershipByUsername(username: string) {
 }
 
 export async function getDealershipById(id: number) {
+  if (_useJsonFallback) {
+    if (id === 1) {
+      return { id: 1, username: "demo", name: "Poulsbo RV", passwordHash: "", email: null, phone: null, address: null, numberOfStores: 1, stores: ["Poulsbo RV"], createdAt: new Date(), updatedAt: new Date() };
+    }
+    return null;
+  }
   const db = getDb();
   const result = await db
     .select()
@@ -234,18 +316,21 @@ export async function getDealershipById(id: number) {
 }
 
 export async function createDealership(data: InsertDealership) {
+  if (_useJsonFallback) return null;
   const db = getDb();
   const result = await db.insert(dealerships).values(data).returning();
   return result[0];
 }
 
 export async function createDealershipSession(data: InsertDealershipSession) {
+  if (_useJsonFallback) return null;
   const db = getDb();
   const result = await db.insert(dealershipSessions).values(data).returning();
   return result[0];
 }
 
 export async function getDealershipSessionByToken(token: string) {
+  if (_useJsonFallback) return null;
   const db = getDb();
   const result = await db
     .select()
@@ -255,11 +340,13 @@ export async function getDealershipSessionByToken(token: string) {
 }
 
 export async function deleteDealershipSession(token: string) {
+  if (_useJsonFallback) return;
   const db = getDb();
   await db.delete(dealershipSessions).where(eq(dealershipSessions.sessionToken, token));
 }
 
 export async function getAllDealershipLeads(dealershipId: number) {
+  if (_useJsonFallback) return [];
   const db = getDb();
   return db
     .select()
@@ -274,6 +361,7 @@ export async function getAllDealershipLeads(dealershipId: number) {
 }
 
 export async function getAllDealershipMatches(dealershipId: number, cursor?: number, limit: number = 20) {
+  if (_useJsonFallback) return [];
   const db = getDb();
 
   let whereClause = eq(leads.dealershipId, dealershipId);
@@ -298,12 +386,14 @@ export async function getAllDealershipMatches(dealershipId: number, cursor?: num
 }
 
 export async function createInAppNotification(data: InsertInAppNotification) {
+  if (_useJsonFallback) return null;
   const db = getDb();
   const result = await db.insert(inAppNotifications).values(data).returning();
   return result[0];
 }
 
 export async function getInAppNotifications(dealershipId: number, limit: number = 20) {
+  if (_useJsonFallback) return [];
   const db = getDb();
   return db
     .select()
@@ -314,6 +404,7 @@ export async function getInAppNotifications(dealershipId: number, limit: number 
 }
 
 export async function markNotificationAsRead(id: number) {
+  if (_useJsonFallback) return;
   const db = getDb();
   await db
     .update(inAppNotifications)
@@ -322,11 +413,16 @@ export async function markNotificationAsRead(id: number) {
 }
 
 export async function updateDealership(id: number, data: Partial<InsertDealership>) {
+  if (_useJsonFallback) return;
   const db = getDb();
   await db.update(dealerships).set({ ...data, updatedAt: new Date() }).where(eq(dealerships.id, id));
 }
 
 export async function getInventoryByUnitId(unitId: string, dealershipId: number) {
+  if (_useJsonFallback) {
+    const all = loadInventoryFromJson();
+    return all.find((item: any) => item.unitId === unitId) || null;
+  }
   const db = getDb();
   const result = await db
     .select()
@@ -336,6 +432,7 @@ export async function getInventoryByUnitId(unitId: string, dealershipId: number)
 }
 
 export async function getUnreadNotificationCount(dealershipId: number) {
+  if (_useJsonFallback) return 0;
   const db = getDb();
   const result = await db
     .select()
