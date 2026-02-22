@@ -14,6 +14,7 @@
     "build:all": "eas build --platform all",
     "submit:ios": "eas submit --platform ios",
     "submit:android": "eas submit --platform android",
+    "build": "npx expo export --platform web --output-dir dist",
     "build:web": "npx expo export --platform web --output-dir dist",
     "db:push": "npx drizzle-kit push",
     "db:migrate": "npx drizzle-kit migrate"
