@@ -38,6 +38,7 @@ const apiLimiter = rateLimit({
 const allowedOrigins = [
   "http://localhost:5000",
   "http://localhost:8081",
+  "http://192.168.1.231:5000",
   "https://lotlink.app",
   "https://www.lotlink.app",
   "https://lotlink.org",
@@ -50,6 +51,8 @@ app.use(cors({
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
+    // In dev, allow any local network origin
+    if (origin && (origin.startsWith("http://192.168.") || origin.startsWith("http://10."))) return callback(null, true);
     callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
