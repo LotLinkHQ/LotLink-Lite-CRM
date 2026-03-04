@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "alt_email" VARCHAR(320) UNIQUE;

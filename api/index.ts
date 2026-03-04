@@ -1,39 +1,15 @@
 import "dotenv/config";
 import express from "express";
-import path from "path";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import rateLimit from "express-rate-limit";
 import * as trpcExpress from "@trpc/server/adapters/express";
-import { createProxyMiddleware } from "http-proxy-middleware";
-import { appRouter } from "./routers";
-import { createContext } from "./trpc";
-import { seedDatabase } from "./seed";
-import * as db from "./db";
+import { appRouter } from "../server/routers";
+import { createContext } from "../server/trpc";
+import * as db from "../server/db";
 import { dealerships } from "../shared/schema";
-import { getDb } from "./db";
+import { getDb } from "../server/db";
 
 const app = express();
-const PORT = 5000;
-const EXPO_PORT = 8081;
-
-// Rate limiting for authentication endpoints only (strict)
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 login attempts per 15 min per IP (relaxed for dev)
-  message: "Too many login attempts, please try again later.",
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// General API rate limiting
-const apiLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 200,
-  message: "Too many requests, please slow down.",
-  standardHeaders: true,
-  legacyHeaders: false,
-});
 
 const allowedOrigins = [
   "http://localhost:5000",
@@ -56,16 +32,6 @@ app.use(cors({
 }));
 app.use(cookieParser());
 
-// Apply strict rate limiting to auth endpoints
-app.use("/api/trpc/auth.login", authLimiter);
-app.use("/api/trpc/auth.signup", authLimiter);
-app.use("/api/trpc/auth.logout", authLimiter);
-app.use("/api/trpc/auth.requestPasswordReset", authLimiter);
-app.use("/api/trpc/auth.resetPassword", authLimiter);
-
-// Apply general rate limiting to all tRPC endpoints
-app.use("/api/trpc", apiLimiter);
-
 // tRPC handles its own body parsing — mount BEFORE express.json()
 app.use(
   "/api/trpc",
@@ -75,16 +41,10 @@ app.use(
   })
 );
 
-// express.json() only for non-tRPC routes (e.g. /api/opt-in)
 app.use(express.json());
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
-});
-
-app.get("/opt-in", (_req, res) => {
-  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  res.sendFile(path.join(__dirname, "../public/opt-in.html"));
 });
 
 app.post("/api/opt-in", async (req, res) => {
@@ -137,7 +97,7 @@ app.post("/api/opt-in", async (req, res) => {
       return res.status(500).json({ success: false, error: "No dealership configured." });
     }
 
-    const lead = await db.createLead({
+    await db.createLead({
       dealershipId: dealership.id,
       customerName,
       customerEmail: customerEmail || null,
@@ -147,11 +107,10 @@ app.post("/api/opt-in", async (req, res) => {
       preferredYear: preferredYear || null,
       preferences,
       notes: notes || null,
-      status: "new",
+      status: "active",
     });
 
-    console.log(`[Opt-In] New lead created: ${customerName} (${formattedPhone}), SMS consent recorded at ${serverTimestamp} from ${preferences.consentIp}`);
-
+    console.log(`[Opt-In] New lead created: ${customerName} (${formattedPhone})`);
     res.json({ success: true, message: "You're signed up for notifications!" });
   } catch (error: any) {
     console.error("[Opt-In] Error:", error.message);
@@ -159,20 +118,4 @@ app.post("/api/opt-in", async (req, res) => {
   }
 });
 
-const proxyMiddleware = createProxyMiddleware({
-  target: `http://localhost:${EXPO_PORT}`,
-  changeOrigin: true,
-  ws: true,
-} as any);
-
-app.use("/", proxyMiddleware);
-
-const server = app.listen(PORT, "0.0.0.0", async () => {
-  console.log(`[Server] Running on http://0.0.0.0:${PORT}`);
-  console.log(`[Server] Proxying frontend from Expo on port ${EXPO_PORT}`);
-  await seedDatabase();
-});
-
-server.on("upgrade", (req, socket, head) => {
-  (proxyMiddleware as any).upgrade(req, socket, head);
-});
+export default app;

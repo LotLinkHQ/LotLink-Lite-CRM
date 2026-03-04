@@ -31,7 +31,12 @@ export default function RootLayout() {
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="index" />
                 <Stack.Screen name="login" />
+                <Stack.Screen name="signup" />
+                <Stack.Screen name="create-dealership" />
                 <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="(owner)" />
+                <Stack.Screen name="lead/[id]" options={{ presentation: "modal" }} />
+                <Stack.Screen name="inventory/[id]" options={{ presentation: "modal" }} />
               </Stack>
               <StatusBar style="auto" />
             </BrandProvider>

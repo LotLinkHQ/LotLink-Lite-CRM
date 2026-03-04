@@ -1,7 +1,11 @@
 import "dotenv/config";
 import { writeFileSync } from "fs";
 
-const TINYFISH_API_KEY = process.env.TINYFISH_API_KEY || "sk-tinyfish-pPjs1MHYLv6y2vPsf9Ca7eV0udX4sl3f";
+const TINYFISH_API_KEY = process.env.TINYFISH_API_KEY;
+if (!TINYFISH_API_KEY) {
+  console.error("TINYFISH_API_KEY environment variable is required");
+  process.exit(1);
+}
 const TINYFISH_URL = "https://agent.tinyfish.ai/v1/automation/run-sse";
 
 const POULSBO_INVENTORY_URLS = [

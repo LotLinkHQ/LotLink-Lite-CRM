@@ -29,18 +29,15 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
     const { isAuthenticated, user } = useDealershipAuth();
     const [branding, setBranding] = useState<Branding>(DEFAULT_BRANDING);
 
-    // Fetch dealership details if authenticated
-    // auth.me returns the dealership object directly
-    const { data: dealershipData, isLoading } = trpc.auth.me.useQuery(undefined, {
-        enabled: !!isAuthenticated && !!user?.id,
+    // Fetch dealership details if authenticated and linked
+    const { data: dealershipData, isLoading } = trpc.dealership.get.useQuery(undefined, {
+        enabled: !!isAuthenticated && !!user?.dealershipId,
         retry: false,
     });
 
     useEffect(() => {
         if (dealershipData) {
-            // dealershipData is the dealership object itself (SelectDealership structure)
-            // verify if branding exists on it (it should if schema is updated)
-            const dbBranding = (dealershipData as any).branding; // Cast because types might not be regenerated yet
+            const dbBranding = (dealershipData as any).branding;
             if (dbBranding) {
                 setBranding({
                     primaryColor: dbBranding.primaryColor || DEFAULT_BRANDING.primaryColor,
@@ -49,7 +46,6 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
                     name: dealershipData.name,
                 });
             } else {
-                // Fallback to default but with correct name
                 setBranding({
                     ...DEFAULT_BRANDING,
                     name: dealershipData.name

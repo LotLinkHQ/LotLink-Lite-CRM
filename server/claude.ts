@@ -64,3 +64,77 @@ ${inventoryContext}`;
     };
   }
 }
+
+export interface ExtractedLeadData {
+  customerName?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  rvType?: string;
+  preferredMake?: string;
+  preferredModel?: string;
+  preferredYear?: string;
+  budget?: string;
+  bedType?: string;
+  minLength?: string;
+  notes?: string;
+}
+
+export async function extractLeadFromImage(
+  imageBase64: string,
+  mediaType: "image/jpeg" | "image/png" | "image/webp" = "image/jpeg"
+): Promise<{ data: ExtractedLeadData; error?: string }> {
+  const client = getClient();
+  if (!client) {
+    return { data: {}, error: "AI not configured. Set ANTHROPIC_API_KEY." };
+  }
+
+  try {
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: { type: "base64", media_type: mediaType, data: imageBase64 },
+            },
+            {
+              type: "text",
+              text: `Extract lead/customer information from this image. It may be handwritten notes, a business card, a printed form, or a dealer trade sheet.
+
+Return ONLY a JSON object with these fields (omit any field you can't confidently extract):
+{
+  "customerName": "Full name",
+  "customerPhone": "Phone number (digits only, with country code if visible)",
+  "customerEmail": "Email address",
+  "rvType": "Type of RV (e.g. Class A, Class C, Fifth Wheel, Travel Trailer)",
+  "preferredMake": "RV manufacturer (e.g. Tiffin, Winnebago, Thor)",
+  "preferredModel": "Specific model name",
+  "preferredYear": "Year or year range",
+  "budget": "Budget amount (digits only)",
+  "bedType": "Bed type preference (e.g. King, Queen)",
+  "minLength": "Minimum length in feet (digits only)",
+  "notes": "Any other relevant information as free text"
+}
+
+Return ONLY valid JSON, no markdown or explanation.`,
+            },
+          ],
+        },
+      ],
+    });
+
+    const textBlock = response.content.find((block) => block.type === "text");
+    const raw = textBlock?.text || "{}";
+
+    // Parse JSON - handle potential markdown wrapping
+    const jsonStr = raw.replace(/^```json?\s*/i, "").replace(/```\s*$/, "").trim();
+    const data: ExtractedLeadData = JSON.parse(jsonStr);
+    return { data };
+  } catch (err: any) {
+    console.error("[Claude] Vision extraction error:", err.message);
+    return { data: {}, error: `Extraction failed: ${err.message}` };
+  }
+}

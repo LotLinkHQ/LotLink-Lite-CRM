@@ -15,6 +15,55 @@
       "when": 1771370000000,
       "tag": "0001_add_dealership_website",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771890000000,
+      "tag": "0002_add_user_accounts",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771920000000,
+      "tag": "0003_add_owner_portal",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1772200000000,
+      "tag": "0004_add_alt_email",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1772600000000,
+      "tag": "0005_add_password_reset_tokens",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1772700000000,
+      "tag": "0006_add_lead_status_values",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1772800000000,
+      "tag": "0007_add_inventory_hold_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1772900000000,
+      "tag": "0008_enhance_matching_engine",
+      "breakpoints": true
     }
   ]
 }

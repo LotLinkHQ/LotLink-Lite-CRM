@@ -1,14 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = process.env.SUPABASE_URL || "https://edofhnuuyhzobwyijeto.supabase.co";
-const SUPABASE_SERVICE_KEY =
-  process.env.SUPABASE_SERVICE_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkb2ZobnV1eWh6b2J3eWlqZXRvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTQ0NTU2NywiZXhwIjoyMDg3MDIxNTY3fQ.YBR4FMM-9OSu9Wk5A4Rpqp3TxYpUY0b8g-6oGf9ingU";
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
 let _supabase: ReturnType<typeof createClient> | null = null;
 
 export function getSupabase() {
   if (!_supabase) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+      throw new Error("[Supabase] SUPABASE_URL and SUPABASE_SERVICE_KEY environment variables are required");
+    }
     _supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
   }
   return _supabase;

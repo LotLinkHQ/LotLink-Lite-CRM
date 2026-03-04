@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -15,51 +15,50 @@ import { useRouter } from "expo-router";
 import { useDealershipAuth } from "@/hooks/use-dealership-auth";
 import { C } from "@/constants/theme";
 
-export default function LoginScreen() {
+export default function SignupScreen() {
   const router = useRouter();
-  const { login, loading: authLoading, isAuthenticated, isLinkedToDealership } = useDealershipAuth();
+  const { signup } = useDealershipAuth();
 
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      if (isLinkedToDealership) {
-        router.replace("/(tabs)");
-      } else {
-        router.replace("/create-dealership" as any);
-      }
-    }
-  }, [isAuthenticated, isLinkedToDealership, authLoading]);
-
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loggingIn, setLoggingIn] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      if (Platform.OS === "web") {
-        window.alert("Please enter both email and password");
-      } else {
-        Alert.alert("Error", "Please enter both email and password");
-      }
+  const showError = (msg: string) => {
+    if (Platform.OS === "web") {
+      window.alert(msg);
+    } else {
+      Alert.alert("Error", msg);
+    }
+  };
+
+  const handleSignup = async () => {
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      showError("Please fill in all fields");
+      return;
+    }
+    if (password !== confirmPassword) {
+      showError("Passwords do not match");
+      return;
+    }
+    if (password.length < 8) {
+      showError("Password must be at least 8 characters");
       return;
     }
 
-    setLoggingIn(true);
-    const result = await login(email, password);
-    setLoggingIn(false);
+    setSubmitting(true);
+    const result = await signup(name, email, password);
+    setSubmitting(false);
 
     if (result.success) {
-      if (result.user?.dealershipId) {
-        router.replace("/(tabs)");
-      } else {
+      if (result.needsDealership) {
         router.replace("/create-dealership" as any);
+      } else {
+        router.replace("/(tabs)");
       }
     } else {
-      const msg = result.error || "Invalid email or password";
-      if (Platform.OS === "web") {
-        window.alert(msg);
-      } else {
-        Alert.alert("Login Failed", msg);
-      }
+      showError(result.error || "Signup failed");
     }
   };
 
@@ -78,20 +77,33 @@ export default function LoginScreen() {
           {/* Branding */}
           <View style={s.brandBox}>
             <Text style={s.brandTitle}>
-              Welcome <Text style={s.brandMint}>Back</Text>
+              Create <Text style={s.brandMint}>Account</Text>
             </Text>
-            <Text style={s.brandSubtitle}>Sign in to your dealership CRM</Text>
+            <Text style={s.brandSubtitle}>Use your work email to connect with your dealership</Text>
           </View>
 
           {/* Form Card */}
           <View style={s.card}>
             <View style={s.fieldWrap}>
-              <Text style={s.fieldLabel}>Email</Text>
+              <Text style={s.fieldLabel}>Full Name</Text>
               <TextInput
-                placeholder="Enter your work email"
+                placeholder="Jane Smith"
+                value={name}
+                onChangeText={setName}
+                editable={!submitting}
+                autoComplete="name"
+                style={s.fieldInput}
+                placeholderTextColor={C.muted}
+              />
+            </View>
+
+            <View style={s.fieldWrap}>
+              <Text style={s.fieldLabel}>Work Email</Text>
+              <TextInput
+                placeholder="jane@yourdealership.com"
                 value={email}
                 onChangeText={setEmail}
-                editable={!loggingIn}
+                editable={!submitting}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 autoComplete="email"
@@ -103,33 +115,46 @@ export default function LoginScreen() {
             <View style={s.fieldWrap}>
               <Text style={s.fieldLabel}>Password</Text>
               <TextInput
-                placeholder="Enter password"
+                placeholder="At least 8 characters"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-                editable={!loggingIn}
+                editable={!submitting}
+                style={s.fieldInput}
+                placeholderTextColor={C.muted}
+              />
+            </View>
+
+            <View style={s.fieldWrap}>
+              <Text style={s.fieldLabel}>Confirm Password</Text>
+              <TextInput
+                placeholder="Repeat password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+                editable={!submitting}
                 style={s.fieldInput}
                 placeholderTextColor={C.muted}
               />
             </View>
 
             <TouchableOpacity
-              onPress={handleLogin}
-              disabled={loggingIn}
-              style={[s.signInBtn, loggingIn && { opacity: 0.6 }]}
+              onPress={handleSignup}
+              disabled={submitting}
+              style={[s.signUpBtn, submitting && { opacity: 0.6 }]}
             >
-              {loggingIn ? (
+              {submitting ? (
                 <ActivityIndicator color={C.white} />
               ) : (
-                <Text style={s.signInBtnText}>Sign In</Text>
+                <Text style={s.signUpBtnText}>Create Account</Text>
               )}
             </TouchableOpacity>
           </View>
 
-          {/* Signup link */}
+          {/* Login link */}
           <View style={s.footer}>
-            <TouchableOpacity onPress={() => router.push("/signup" as any)}>
-              <Text style={s.footerLink}>Don't have an account? <Text style={{ fontWeight: "800" }}>Create one</Text></Text>
+            <TouchableOpacity onPress={() => router.push("/login")}>
+              <Text style={s.footerLink}>Already have an account? <Text style={{ fontWeight: "800" }}>Sign in</Text></Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -149,7 +174,7 @@ const s = StyleSheet.create({
   brandBox: { alignItems: "center", marginBottom: 28 },
   brandTitle: { fontSize: 28, fontWeight: "800", color: C.ink, letterSpacing: -0.5 },
   brandMint: { color: C.teal },
-  brandSubtitle: { color: C.muted, fontSize: 14, marginTop: 4 },
+  brandSubtitle: { color: C.muted, fontSize: 14, marginTop: 4, textAlign: "center" },
 
   card: { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.rule, borderRadius: 16, padding: 20 },
 
@@ -157,8 +182,8 @@ const s = StyleSheet.create({
   fieldLabel: { fontSize: 10, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.7, color: C.muted, marginBottom: 6 },
   fieldInput: { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.rule, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, fontWeight: "600", color: C.ink },
 
-  signInBtn: { backgroundColor: C.teal, borderRadius: 12, paddingVertical: 14, alignItems: "center", marginTop: 8 },
-  signInBtnText: { color: C.white, fontWeight: "800", fontSize: 16, letterSpacing: -0.2 },
+  signUpBtn: { backgroundColor: C.teal, borderRadius: 12, paddingVertical: 14, alignItems: "center", marginTop: 8 },
+  signUpBtnText: { color: C.white, fontWeight: "800", fontSize: 16, letterSpacing: -0.2 },
 
   footer: { marginTop: 24, alignItems: "center" },
   footerLink: { color: C.teal, fontWeight: "600", fontSize: 13 },

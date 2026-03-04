@@ -1,327 +1,322 @@
-import { View, Text, TouchableOpacity, ScrollView, Switch, TextInput, ActivityIndicator, Alert } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Switch, TextInput, ActivityIndicator, Alert, Modal, Platform, StyleSheet } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useDealershipAuth } from "@/hooks/use-dealership-auth";
 import { trpc } from "@/lib/trpc";
 import { useRouter } from "expo-router";
 import { useState, useEffect } from "react";
+import { C } from "@/constants/theme";
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: "Admin", manager: "Manager", salesperson: "Salesperson",
+};
+const ROLE_COLORS: Record<string, string> = {
+  admin: C.red, manager: C.amber, salesperson: C.teal,
+};
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useDealershipAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useDealershipAuth();
 
-  const { data: preferences } = trpc.preferences.get.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
-
-  const { data: dealership, refetch: refetchDealership } = trpc.dealership.get.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
+  const { data: preferences } = trpc.preferences.get.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: dealership, refetch: refetchDealership } = trpc.dealership.get.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: teamMembers, refetch: refetchTeam } = trpc.users.list.useQuery(undefined, { enabled: isAuthenticated && isAdmin });
+  const { data: pendingInvites, refetch: refetchInvites } = trpc.invites.list.useQuery(undefined, { enabled: isAuthenticated && isAdmin });
 
   const updatePreferences = trpc.preferences.update.useMutation();
-  const updateWebsite = trpc.dealership.updateWebsite.useMutation({
-    onSuccess: () => {
-      refetchDealership();
-    },
-  });
+  const updateWebsite = trpc.dealership.updateWebsite.useMutation({ onSuccess: () => refetchDealership() });
   const syncInventory = trpc.dealership.syncInventory.useMutation({
     onSuccess: (data) => {
       refetchDealership();
       if (data.success) {
-        Alert.alert(
-          "Sync Complete",
-          `Found ${data.totalFound} vehicles.\n${data.newUnits} new units added.\n${data.updatedUnits} units updated.${data.errors.length > 0 ? `\n${data.errors.length} errors.` : ""}`
-        );
+        Alert.alert("Sync Complete", `Found ${data.totalFound} vehicles.\n${data.newUnits} new units added.\n${data.updatedUnits} units updated.`);
       } else {
-        Alert.alert("Sync Failed", data.errors?.join("\n") || "Unknown error");
+        Alert.alert("Sync Failed", "Unknown error");
       }
     },
-    onError: (error) => {
-      Alert.alert("Sync Error", error.message);
+    onError: (error) => Alert.alert("Sync Error", error.message),
+  });
+  const createInvite = trpc.invites.create.useMutation({
+    onSuccess: (data) => {
+      if (data.success) { refetchInvites(); setInviteEmail(""); setInviteRole("salesperson"); setShowInviteModal(false); }
+      else showError(data.error || "Failed to send invite");
     },
   });
+  const revokeInvite = trpc.invites.revoke.useMutation({ onSuccess: () => refetchInvites() });
+  const updateRole = trpc.users.updateRole.useMutation({ onSuccess: () => refetchTeam() });
+  const toggleActive = trpc.users.deactivate.useMutation({ onSuccess: () => refetchTeam() });
 
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [websiteEdited, setWebsiteEdited] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<"salesperson" | "manager" | "admin">("salesperson");
 
   useEffect(() => {
-    if (dealership?.websiteUrl && !websiteEdited) {
-      setWebsiteUrl(dealership.websiteUrl);
-    }
+    if (dealership?.websiteUrl && !websiteEdited) setWebsiteUrl(dealership.websiteUrl);
   }, [dealership?.websiteUrl]);
 
-  const handleLogout = async () => {
-    await logout();
-    router.replace("/login");
-  };
-
-  const handleSaveWebsite = () => {
-    if (!websiteUrl.trim()) return;
-    updateWebsite.mutate({ websiteUrl: websiteUrl.trim() });
-    setWebsiteEdited(false);
-  };
-
+  const showError = (msg: string) => Platform.OS === "web" ? window.alert(msg) : Alert.alert("Error", msg);
+  const handleLogout = async () => { await logout(); router.replace("/login"); };
   const handleSync = () => {
-    if (!dealership?.websiteUrl && !websiteUrl.trim()) {
-      Alert.alert("No Website", "Please enter your dealership website URL first.");
-      return;
-    }
+    if (!dealership?.websiteUrl && !websiteUrl.trim()) { Alert.alert("No Website", "Please enter your dealership website URL first."); return; }
     if (websiteEdited && websiteUrl.trim()) {
-      updateWebsite.mutate(
-        { websiteUrl: websiteUrl.trim() },
-        {
-          onSuccess: () => {
-            setWebsiteEdited(false);
-            syncInventory.mutate();
-          },
-        }
-      );
-    } else {
-      syncInventory.mutate();
-    }
+      updateWebsite.mutate({ websiteUrl: websiteUrl.trim() }, { onSuccess: () => { setWebsiteEdited(false); syncInventory.mutate(); } });
+    } else { syncInventory.mutate(); }
   };
 
   if (!isAuthenticated) {
-    return (
-      <ScreenContainer>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ color: "#2C3E50", fontSize: 18 }}>Please log in to continue</Text>
-        </View>
-      </ScreenContainer>
-    );
+    return <ScreenContainer><View style={s.center}><Text style={s.centerText}>Please log in to continue</Text></View></ScreenContainer>;
   }
 
-  const lastSynced = dealership?.lastScrapedAt
-    ? new Date(dealership.lastScrapedAt).toLocaleString()
-    : "Never";
+  const lastSynced = dealership?.lastScrapedAt ? new Date(dealership.lastScrapedAt).toLocaleString() : "Never";
 
   return (
     <ScreenContainer>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <Text style={{ fontSize: 24, fontWeight: "bold", color: "#2C3E50", marginBottom: 24 }}>
-          Settings
-        </Text>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <Text style={s.screenTitle}>Settings</Text>
 
-        {/* Dealership Profile */}
-        <View
-          style={{
-            backgroundColor: "#FFFFFF",
-            borderRadius: 12,
-            padding: 16,
-            borderWidth: 1,
-            borderColor: "#ECF0F1",
-            marginBottom: 16,
-          }}
-        >
-          <Text style={{ fontSize: 16, fontWeight: "600", color: "#2C3E50", marginBottom: 12 }}>
-            Dealership Profile
-          </Text>
-          <View style={{ gap: 8 }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <Text style={{ color: "#7F8C8D" }}>Name</Text>
-              <Text style={{ color: "#2C3E50", fontWeight: "500" }}>{user?.name || "-"}</Text>
-            </View>
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <Text style={{ color: "#7F8C8D" }}>Username</Text>
-              <Text style={{ color: "#2C3E50", fontWeight: "500" }}>{user?.username || "-"}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Inventory Sync */}
-        <View
-          style={{
-            backgroundColor: "#FFFFFF",
-            borderRadius: 12,
-            padding: 16,
-            borderWidth: 1,
-            borderColor: "#ECF0F1",
-            marginBottom: 16,
-          }}
-        >
-          <Text style={{ fontSize: 16, fontWeight: "600", color: "#2C3E50", marginBottom: 4 }}>
-            Inventory Sync
-          </Text>
-          <Text style={{ fontSize: 12, color: "#95A5A6", marginBottom: 12 }}>
-            Enter your dealership website to auto-import inventory
-          </Text>
-
-          <Text style={{ fontSize: 13, fontWeight: "500", color: "#2C3E50", marginBottom: 6 }}>
-            Website URL
-          </Text>
-          <TextInput
-            value={websiteUrl}
-            onChangeText={(text) => {
-              setWebsiteUrl(text);
-              setWebsiteEdited(true);
-            }}
-            placeholder="https://www.yourdealership.com"
-            placeholderTextColor="#BDC3C7"
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="url"
-            style={{
-              backgroundColor: "#F8F9FA",
-              borderRadius: 8,
-              borderWidth: 1,
-              borderColor: "#ECF0F1",
-              paddingHorizontal: 12,
-              paddingVertical: 10,
-              fontSize: 14,
-              color: "#2C3E50",
-              marginBottom: 8,
-            }}
-          />
-
-          {websiteEdited && websiteUrl.trim() !== (dealership?.websiteUrl || "") && (
-            <TouchableOpacity
-              onPress={handleSaveWebsite}
-              disabled={updateWebsite.isLoading}
-              style={{
-                backgroundColor: "#0B5E7E",
-                borderRadius: 8,
-                paddingVertical: 10,
-                alignItems: "center",
-                marginBottom: 8,
-              }}
-            >
-              <Text style={{ color: "white", fontWeight: "600", fontSize: 14 }}>
-                {updateWebsite.isLoading ? "Saving..." : "Save URL"}
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 12 }}>
-            <Text style={{ color: "#7F8C8D", fontSize: 13 }}>Last synced</Text>
-            <Text style={{ color: "#2C3E50", fontSize: 13 }}>{lastSynced}</Text>
-          </View>
-
-          <TouchableOpacity
-            onPress={handleSync}
-            disabled={syncInventory.isLoading}
-            style={{
-              backgroundColor: syncInventory.isLoading ? "#95A5A6" : "#27AE60",
-              borderRadius: 8,
-              paddingVertical: 12,
-              alignItems: "center",
-              flexDirection: "row",
-              justifyContent: "center",
-              gap: 8,
-            }}
-          >
-            {syncInventory.isLoading && <ActivityIndicator size="small" color="white" />}
-            <Text style={{ color: "white", fontWeight: "600", fontSize: 15 }}>
-              {syncInventory.isLoading ? "Syncing Inventory..." : "Sync Inventory Now"}
-            </Text>
-          </TouchableOpacity>
-
-          <Text style={{ fontSize: 11, color: "#95A5A6", marginTop: 8, textAlign: "center" }}>
-            Inventory auto-syncs every 24 hours when a URL is configured
-          </Text>
-        </View>
-
-        {/* Notifications */}
-        <View
-          style={{
-            backgroundColor: "#FFFFFF",
-            borderRadius: 12,
-            padding: 16,
-            borderWidth: 1,
-            borderColor: "#ECF0F1",
-            marginBottom: 16,
-          }}
-        >
-          <Text style={{ fontSize: 16, fontWeight: "600", color: "#2C3E50", marginBottom: 12 }}>
-            Notifications
-          </Text>
-          <View style={{ gap: 12 }}>
-            {[
-              { label: "Email Notifications", key: "emailNotifications" },
-              { label: "In-App Notifications", key: "inAppNotifications" },
-            ].map((item) => (
-              <View key={item.key} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Text style={{ color: "#2C3E50" }}>{item.label}</Text>
-                <Switch
-                  value={(preferences as any)?.[item.key] ?? (item.key === "emailNotifications" || item.key === "inAppNotifications")}
-                  onValueChange={(val) => {
-                    updatePreferences.mutate({ [item.key]: val });
-                  }}
-                  trackColor={{ false: "#ECF0F1", true: "#0B5E7E" }}
-                  thumbColor="#FFFFFF"
-                />
+        {/* Profile */}
+        <View style={s.card}>
+          <Text style={s.cardTitle}>Your Profile</Text>
+          <View style={{ gap: 10 }}>
+            {[{ label: "Name", value: user?.name }, { label: "Email", value: user?.email }, { label: "Dealership", value: user?.dealershipName }].map((row) => (
+              <View key={row.label} style={s.profileRow}>
+                <Text style={s.profileLabel}>{row.label}</Text>
+                <Text style={s.profileValue}>{row.value || "—"}</Text>
               </View>
             ))}
+            <View style={s.profileRow}>
+              <Text style={s.profileLabel}>Role</Text>
+              <View style={[s.roleBadge, { backgroundColor: (ROLE_COLORS[user?.role || "salesperson"] || C.teal) + "22" }]}>
+                <Text style={[s.roleText, { color: ROLE_COLORS[user?.role || "salesperson"] || C.teal }]}>
+                  {ROLE_LABELS[user?.role || "salesperson"]}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
 
-        {/* API Configuration Info */}
-        <View
-          style={{
-            backgroundColor: "#FFFFFF",
-            borderRadius: 12,
-            padding: 16,
-            borderWidth: 1,
-            borderColor: "#ECF0F1",
-            marginBottom: 16,
-          }}
-        >
-          <Text style={{ fontSize: 16, fontWeight: "600", color: "#2C3E50", marginBottom: 4 }}>
-            Email Configuration
-          </Text>
-          <Text style={{ fontSize: 12, color: "#95A5A6", marginBottom: 12 }}>
-            Set these in your Railway environment variables
-          </Text>
-          <View style={{ gap: 6 }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <Text style={{ color: "#7F8C8D", fontSize: 13 }}>SENDGRID_API_KEY</Text>
-              <Text style={{ color: "#27AE60", fontSize: 13, fontWeight: "500" }}>
-                {/* This is informational only - actual check happens server-side */}
-                Set in Railway
-              </Text>
+        {/* Team */}
+        {isAdmin && (
+          <View style={s.card}>
+            <View style={s.cardHeader}>
+              <Text style={s.cardTitle}>Team Members</Text>
+              <TouchableOpacity onPress={() => setShowInviteModal(true)} style={s.inviteBtn}>
+                <Text style={s.inviteBtnText}>+ Invite</Text>
+              </TouchableOpacity>
             </View>
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <Text style={{ color: "#7F8C8D", fontSize: 13 }}>SENDGRID_FROM_EMAIL</Text>
-              <Text style={{ color: "#27AE60", fontSize: 13, fontWeight: "500" }}>
-                Set in Railway
-              </Text>
-            </View>
+            {teamMembers && teamMembers.length > 0 ? (
+              <View style={{ gap: 8 }}>
+                {teamMembers.map((member: any) => (
+                  <View key={member.id} style={[s.memberRow, { opacity: member.isActive ? 1 : 0.5 }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.memberName}>{member.name} {member.id === user?.id ? "(You)" : ""}</Text>
+                      <Text style={s.memberEmail}>{member.email}</Text>
+                    </View>
+                    <View style={{ alignItems: "flex-end", gap: 4 }}>
+                      <View style={[s.roleBadge, { backgroundColor: (ROLE_COLORS[member.role] || C.teal) + "22" }]}>
+                        <Text style={[s.roleText, { color: ROLE_COLORS[member.role] || C.teal }]}>{ROLE_LABELS[member.role]}</Text>
+                      </View>
+                      {member.id !== user?.id && (
+                        <View style={{ flexDirection: "row", gap: 10 }}>
+                          <TouchableOpacity onPress={() => {
+                            const next = member.role === "salesperson" ? "manager" : member.role === "manager" ? "admin" : "salesperson";
+                            updateRole.mutate({ userId: member.id, role: next });
+                          }}>
+                            <Text style={s.actionLink}>Change Role</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => toggleActive.mutate({ userId: member.id })}>
+                            <Text style={[s.actionLink, { color: member.isActive ? C.red : C.green }]}>
+                              {member.isActive ? "Deactivate" : "Activate"}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <Text style={s.emptyText}>No team members yet</Text>
+            )}
+            {(pendingInvites || []).filter((i: any) => i.status === "pending").length > 0 && (
+              <View style={{ marginTop: 12 }}>
+                <Text style={s.sectionLabel}>Pending Invites</Text>
+                {(pendingInvites || []).filter((i: any) => i.status === "pending").map((invite: any) => (
+                  <View key={invite.id} style={s.inviteRow}>
+                    <View>
+                      <Text style={s.inviteEmail}>{invite.email}</Text>
+                      <Text style={s.inviteRole}>{ROLE_LABELS[invite.role]}</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => revokeInvite.mutate({ id: invite.id })}>
+                      <Text style={[s.actionLink, { color: C.red }]}>Revoke</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+            {dealership?.emailDomain && (
+              <View style={s.domainNote}><Text style={s.domainText}>Auto-join domain: @{dealership.emailDomain}</Text></View>
+            )}
           </View>
+        )}
+
+        {/* Inventory Sync */}
+        {isAdmin && (
+          <View style={s.card}>
+            <Text style={s.cardTitle}>Inventory Sync</Text>
+            <Text style={s.cardSub}>Enter your dealership website to auto-import inventory</Text>
+            <Text style={s.fieldLabel}>Website URL</Text>
+            <TextInput
+              value={websiteUrl}
+              onChangeText={(t) => { setWebsiteUrl(t); setWebsiteEdited(true); }}
+              placeholder="https://www.yourdealership.com"
+              placeholderTextColor={C.muted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              style={s.textInput}
+            />
+            {websiteEdited && websiteUrl.trim() !== (dealership?.websiteUrl || "") && (
+              <TouchableOpacity onPress={() => { updateWebsite.mutate({ websiteUrl: websiteUrl.trim() }); setWebsiteEdited(false); }} disabled={updateWebsite.isLoading} style={s.saveUrlBtn}>
+                <Text style={s.saveUrlBtnText}>{updateWebsite.isLoading ? "Saving..." : "Save URL"}</Text>
+              </TouchableOpacity>
+            )}
+            <View style={s.syncRow}>
+              <Text style={s.syncLabel}>Last synced</Text>
+              <Text style={s.syncValue}>{lastSynced}</Text>
+            </View>
+            <TouchableOpacity onPress={handleSync} disabled={syncInventory.isLoading} style={[s.syncBtn, { opacity: syncInventory.isLoading ? 0.7 : 1 }]}>
+              {syncInventory.isLoading && <ActivityIndicator size="small" color={C.white} />}
+              <Text style={s.syncBtnText}>{syncInventory.isLoading ? "Syncing..." : "Sync Inventory Now"}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Notifications */}
+        <View style={s.card}>
+          <Text style={s.cardTitle}>Notifications</Text>
+          {[{ label: "Email Notifications", key: "emailNotifications" }, { label: "In-App Notifications", key: "inAppNotifications" }].map((item) => (
+            <View key={item.key} style={s.switchRow}>
+              <Text style={s.switchLabel}>{item.label}</Text>
+              <Switch
+                value={(preferences as any)?.[item.key] ?? true}
+                onValueChange={(val) => updatePreferences.mutate({ [item.key]: val })}
+                trackColor={{ false: C.rule, true: C.teal }}
+                thumbColor={C.white}
+                disabled={!isAdmin}
+              />
+            </View>
+          ))}
+          {!isAdmin && <Text style={s.adminNote}>Only admins can change notification settings</Text>}
         </View>
 
         {/* App Info */}
-        <View
-          style={{
-            backgroundColor: "#FFFFFF",
-            borderRadius: 12,
-            padding: 16,
-            borderWidth: 1,
-            borderColor: "#ECF0F1",
-            marginBottom: 24,
-          }}
-        >
-          <Text style={{ fontSize: 16, fontWeight: "600", color: "#2C3E50", marginBottom: 12 }}>
-            App Info
-          </Text>
-          <View style={{ gap: 8 }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <Text style={{ color: "#7F8C8D" }}>Version</Text>
-              <Text style={{ color: "#2C3E50" }}>1.0.0</Text>
-            </View>
+        <View style={s.card}>
+          <Text style={s.cardTitle}>App Info</Text>
+          <View style={s.profileRow}>
+            <Text style={s.profileLabel}>Version</Text>
+            <Text style={s.profileValue}>2.0.0</Text>
           </View>
         </View>
 
-        <TouchableOpacity
-          onPress={handleLogout}
-          style={{
-            backgroundColor: "#E74C3C",
-            borderRadius: 8,
-            paddingVertical: 14,
-            alignItems: "center",
-            marginBottom: 40,
-          }}
-        >
-          <Text style={{ color: "white", fontWeight: "600", fontSize: 16 }}>Sign Out</Text>
+        <TouchableOpacity onPress={handleLogout} style={s.logoutBtn}>
+          <Text style={s.logoutBtnText}>Sign Out</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <Modal visible={showInviteModal} transparent animationType="fade">
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>Invite Team Member</Text>
+            <Text style={s.fieldLabel}>Email</Text>
+            <TextInput
+              placeholder="colleague@email.com"
+              value={inviteEmail}
+              onChangeText={setInviteEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              style={[s.textInput, { marginBottom: 14 }]}
+              placeholderTextColor={C.muted}
+            />
+            <Text style={s.fieldLabel}>Role</Text>
+            <View style={s.rolePicker}>
+              {(["salesperson", "manager", "admin"] as const).map((r) => (
+                <TouchableOpacity key={r} onPress={() => setInviteRole(r)} style={[s.rolePickerBtn, inviteRole === r && { backgroundColor: ROLE_COLORS[r], borderColor: ROLE_COLORS[r] }]}>
+                  <Text style={[s.rolePickerText, inviteRole === r && { color: C.white }]}>{ROLE_LABELS[r]}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>
+              <TouchableOpacity onPress={() => setShowInviteModal(false)} style={s.cancelBtn}>
+                <Text style={s.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => { if (!inviteEmail.trim()) { showError("Please enter an email"); return; } createInvite.mutate({ email: inviteEmail, role: inviteRole }); }}
+                disabled={createInvite.isLoading}
+                style={s.sendBtn}
+              >
+                <Text style={s.sendBtnText}>{createInvite.isLoading ? "Sending..." : "Send Invite"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScreenContainer>
   );
 }
+
+const s = StyleSheet.create({
+  center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  centerText: { color: C.ink, fontSize: 18 },
+  screenTitle: { fontSize: 24, fontWeight: "700", color: C.ink, marginBottom: 16 },
+  card: { backgroundColor: C.surface, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: C.rule, marginBottom: 14 },
+  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  cardTitle: { fontSize: 16, fontWeight: "600", color: C.ink, marginBottom: 12 },
+  cardSub: { fontSize: 12, color: C.muted, marginBottom: 10, marginTop: -8 },
+  profileRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  profileLabel: { color: C.muted, fontSize: 14 },
+  profileValue: { color: C.ink, fontWeight: "500", fontSize: 14 },
+  roleBadge: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 3 },
+  roleText: { fontWeight: "600", fontSize: 12 },
+  inviteBtn: { backgroundColor: C.teal, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 6 },
+  inviteBtnText: { color: C.white, fontWeight: "600", fontSize: 13 },
+  memberRow: { backgroundColor: C.white, borderRadius: 8, padding: 12, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  memberName: { fontWeight: "600", color: C.ink, fontSize: 14 },
+  memberEmail: { color: C.muted, fontSize: 12, marginTop: 2 },
+  actionLink: { color: C.teal, fontSize: 11, fontWeight: "600" },
+  emptyText: { color: C.muted, fontSize: 13 },
+  sectionLabel: { fontSize: 13, fontWeight: "600", color: C.muted, marginBottom: 6 },
+  inviteRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 },
+  inviteEmail: { color: C.ink, fontSize: 13 },
+  inviteRole: { color: C.muted, fontSize: 11, marginTop: 2 },
+  domainNote: { marginTop: 10, backgroundColor: C.tealLite, borderRadius: 8, padding: 10 },
+  domainText: { color: C.teal, fontSize: 12 },
+  fieldLabel: { color: C.ink, fontWeight: "600", fontSize: 13, marginBottom: 6 },
+  textInput: {
+    backgroundColor: C.white, borderWidth: 1, borderColor: C.rule,
+    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: C.ink, marginBottom: 8,
+  },
+  saveUrlBtn: { backgroundColor: C.teal, borderRadius: 8, paddingVertical: 9, alignItems: "center", marginBottom: 8 },
+  saveUrlBtnText: { color: C.white, fontWeight: "600", fontSize: 14 },
+  syncRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 10 },
+  syncLabel: { color: C.muted, fontSize: 13 },
+  syncValue: { color: C.ink, fontSize: 13 },
+  syncBtn: { backgroundColor: C.green, borderRadius: 8, paddingVertical: 12, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8 },
+  syncBtnText: { color: C.white, fontWeight: "600", fontSize: 15 },
+  switchRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  switchLabel: { color: C.ink, fontSize: 14 },
+  adminNote: { fontSize: 11, color: C.muted, marginTop: 4 },
+  logoutBtn: { backgroundColor: C.red, borderRadius: 10, paddingVertical: 14, alignItems: "center", marginBottom: 40 },
+  logoutBtnText: { color: C.white, fontWeight: "600", fontSize: 16 },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", paddingHorizontal: 24 },
+  modalCard: { backgroundColor: C.white, borderRadius: 16, padding: 22 },
+  modalTitle: { fontSize: 18, fontWeight: "700", color: C.ink, marginBottom: 14 },
+  rolePicker: { flexDirection: "row", gap: 8, marginBottom: 16 },
+  rolePickerBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: "center", backgroundColor: C.surface, borderWidth: 1, borderColor: C.rule },
+  rolePickerText: { color: C.ink, fontWeight: "600", fontSize: 12 },
+  cancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 8, alignItems: "center", backgroundColor: C.surface },
+  cancelBtnText: { color: C.muted, fontWeight: "600" },
+  sendBtn: { flex: 1, paddingVertical: 12, borderRadius: 8, alignItems: "center", backgroundColor: C.teal },
+  sendBtnText: { color: C.white, fontWeight: "600" },
+});

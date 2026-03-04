@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
+import { sql } from "drizzle-orm";
 import { appRouter } from "./routers";
 import { createContext } from "./trpc";
 import { seedDatabase } from "./seed";
@@ -32,7 +33,7 @@ const allowedOrigins = [
 // Rate limiting for authentication endpoints only (strict)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 login attempts per 15 min per IP
+  max: 5, // 5 login attempts per 15 min per IP
   message: "Too many login attempts, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
@@ -49,13 +50,10 @@ const apiLimiter = rateLimit({
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
+    // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    // For mobile apps, allow all origins (they don't send origin header typically)
-    return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
 }));
@@ -63,14 +61,39 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 
-// Health check endpoint
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+// Health check endpoint with real status
+app.get("/api/health", async (_req, res) => {
+  const checks: Record<string, string> = {};
+  let healthy = true;
+
+  // Check database connectivity
+  try {
+    const database = getDb();
+    if (database) {
+      await database.execute(sql`SELECT 1`);
+      checks.database = "ok";
+    } else {
+      checks.database = "unavailable";
+      healthy = false;
+    }
+  } catch {
+    checks.database = "error";
+    healthy = false;
+  }
+
+  res.status(healthy ? 200 : 503).json({
+    status: healthy ? "ok" : "degraded",
+    checks,
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Apply strict rate limiting only to auth endpoints
 app.use("/api/trpc/auth.login", authLimiter);
+app.use("/api/trpc/auth.signup", authLimiter);
 app.use("/api/trpc/auth.logout", authLimiter);
+app.use("/api/trpc/auth.requestPasswordReset", authLimiter);
+app.use("/api/trpc/auth.resetPassword", authLimiter);
 
 // Apply general rate limiting to all tRPC endpoints
 app.use("/api/trpc", apiLimiter);
@@ -149,7 +172,7 @@ app.post("/api/opt-in", async (req, res) => {
       preferredYear: preferredYear || null,
       preferences,
       notes: notes || null,
-      status: "active",
+      status: "new",
     });
 
     console.log(`[Opt-In] New lead created: ${customerName} (${formattedPhone}), SMS consent recorded at ${serverTimestamp} from ${preferences.consentIp}`);

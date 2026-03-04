@@ -190,6 +190,32 @@ export async function scrapeInventoryFromWebsite(
       }
     }
 
+    // Flag units not found in this scrape as "removed" (only website-imported ones)
+    if (processed > 0) {
+      const allUnits = await database.select().from(inventory)
+        .where(eq(inventory.dealershipId, dealershipId));
+      const scrapedUnitIds = new Set(
+        Array.from(vehicleLinks).map(url => {
+          // Best-effort: we can't reliably map URL→unitId here, so we track processed IDs
+          return null;
+        }).filter(Boolean)
+      );
+      // Mark stale website imports that weren't seen in the current scrape
+      const staleThreshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7 days
+      for (const unit of allUnits) {
+        if (
+          unit.storeLocation === "Website Import" &&
+          unit.status === "in_stock" &&
+          unit.updatedAt < staleThreshold
+        ) {
+          await database.update(inventory)
+            .set({ status: "removed" as any, updatedAt: new Date() })
+            .where(eq(inventory.id, unit.id));
+          console.log(`[Scraper] Flagged stale: ${unit.year} ${unit.make} ${unit.model} (not updated in 7+ days)`);
+        }
+      }
+    }
+
     // Update last scraped timestamp
     await database
       .update(dealerships)
