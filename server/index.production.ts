@@ -23,17 +23,19 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
   "http://localhost:5000",
   "http://localhost:8081",
+  "https://rv-sales-crm-api-production-0183.up.railway.app",
   "https://lotlink.app",
   "https://www.lotlink.app",
   "https://lotlink.org",
   "https://www.lotlink.org",
+  process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : "",
   process.env.FRONTEND_URL,
 ].filter(Boolean) as string[];
 
 // Rate limiting for authentication endpoints only (strict)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 login attempts per 15 min per IP
+  max: 10, // 10 login attempts per 15 min per IP
   message: "Too many login attempts, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
@@ -53,6 +55,8 @@ app.use(cors({
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
+    // Allow Railway's own domain
+    if (origin && origin.endsWith(".up.railway.app")) return callback(null, true);
     callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
