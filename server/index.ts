@@ -78,8 +78,24 @@ app.use(
 // express.json() only for non-tRPC routes (e.g. /api/opt-in)
 app.use(express.json());
 
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+app.get("/api/health", async (_req, res) => {
+  const uptime = process.uptime();
+  let dbStatus = "unknown";
+  try {
+    if (process.env.DATABASE_URL) {
+      const { getDb } = await import("./db");
+      const db = getDb();
+      if (db) { await db.execute({ sql: "SELECT 1" } as any); dbStatus = "connected"; }
+      else { dbStatus = "json_fallback"; }
+    } else { dbStatus = "json_fallback"; }
+  } catch { dbStatus = "error"; }
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    uptime: Math.round(uptime),
+    db: dbStatus,
+    env: process.env.NODE_ENV || "development",
+  });
 });
 
 app.get("/opt-in", (_req, res) => {

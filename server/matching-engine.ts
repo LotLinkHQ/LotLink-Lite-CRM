@@ -411,7 +411,7 @@ export async function runMatchingForNewInventory(
   console.log(`[Matching] Notify threshold: ${notifyThreshold}, Store threshold: ${storeThreshold}`);
 
   // Batch fetch existing matches
-  const leadIds = activeLeads.map(lead => lead.id);
+  const leadIds = activeLeads.map((lead: any) => lead.id);
   const allExistingMatches = await db.getMatchesByLeadIds(leadIds);
   const matchesByLeadId = new Map<number, any[]>();
   for (const match of allExistingMatches) {
@@ -554,7 +554,7 @@ export async function runMatchingForAllInventory(dealershipId: number) {
   for (let i = 0; i < inStockUnits.length; i += CONCURRENCY_LIMIT) {
     const batch = inStockUnits.slice(i, i + CONCURRENCY_LIMIT);
     const results = await Promise.all(
-      batch.map(unit => runMatchingForNewInventory(unit.id, dealershipId))
+      batch.map((unit: any) => runMatchingForNewInventory(unit.id, dealershipId))
     );
 
     for (const result of results) {

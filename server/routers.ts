@@ -5,9 +5,9 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { runMatchingForNewInventory, runMatchingForNewLead, runMatchingForAllInventory, retryPendingNotifications } from "./matching-engine";
 import { scrapeInventoryFromWebsite } from "./inventory-scraper";
-import { askAboutInventory, isClaudeConfigured, extractLeadFromImage } from "./claude";
+import { askAboutInventory, isClaudeConfigured, extractLeadFromImage, extractLeadFromTranscript, extractLeadUpdatesFromTranscript, prepareCallTalkingPoints, generateMatchExplanation } from "./claude";
 import { buildInventoryContext } from "./inventory-context";
-import { sendPasswordResetEmail } from "./sendgrid";
+import { sendPasswordResetEmail, sendDailyDigestEmail } from "./sendgrid";
 
 const passwordSchema = z.string()
   .min(8, "Password must be at least 8 characters")
@@ -286,6 +286,7 @@ export const appRouter = router({
         websiteUrl: d.websiteUrl,
         emailDomain: d.emailDomain,
         lastScrapedAt: d.lastScrapedAt,
+        branding: d.branding,
       };
     }),
 
@@ -296,6 +297,7 @@ export const appRouter = router({
           email: z.string().email().optional(),
           phone: z.string().optional(),
           address: z.string().optional(),
+          websiteUrl: z.string().optional(),
           registerDomain: z.boolean().default(true),
         })
       )
@@ -330,6 +332,7 @@ export const appRouter = router({
           email: input.email,
           phone: input.phone,
           address: input.address,
+          websiteUrl: input.websiteUrl,
         });
 
         if (!dealership) {
@@ -363,6 +366,20 @@ export const appRouter = router({
           return { success: false as const, error: "Domain already claimed by another dealership" };
         }
         await db.updateDealership(ctx.dealership.id, { emailDomain: domain });
+        return { success: true as const };
+      }),
+
+    updateBranding: adminProcedure
+      .input(z.object({
+        primaryColor: z.string().optional(),
+        logoUrl: z.string().optional(),
+        showPoweredBy: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const dealership = await db.getDealershipById(ctx.dealership.id);
+        const current = (dealership?.branding as any) || {};
+        const branding = { ...current, ...input };
+        await db.updateDealership(ctx.dealership.id, { branding } as any);
         return { success: true as const };
       }),
 
@@ -478,6 +495,22 @@ export const appRouter = router({
         }
         await db.updateInvite(input.id, { status: "revoked" } as any);
         return { success: true as const };
+      }),
+
+    resend: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const invite = await db.getInviteById(input.id);
+        if (!invite || invite.dealershipId !== ctx.dealership.id) {
+          return { success: false as const, error: "Invite not found" };
+        }
+        if (invite.status !== "pending") {
+          return { success: false as const, error: "Invite is not pending" };
+        }
+        // Extend expiration by 7 days
+        const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        await db.updateInvite(input.id, { expiresAt: newExpiry } as any);
+        return { success: true as const, inviteToken: invite.inviteToken };
       }),
 
     accept: publicProcedure
@@ -691,6 +724,62 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const result = await extractLeadFromImage(input.imageBase64, input.mediaType);
         return result;
+      }),
+
+    extractFromVoice: protectedProcedure
+      .input(z.object({
+        transcript: z.string().min(1).max(10000),
+      }))
+      .mutation(async ({ input }) => {
+        return extractLeadFromTranscript(input.transcript);
+      }),
+
+    appendVoiceNote: protectedProcedure
+      .input(z.object({
+        leadId: z.number(),
+        transcript: z.string().min(1).max(10000),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const lead = await db.getLeadById(input.leadId);
+        if (!lead || lead.dealershipId !== ctx.dealership.id) return { error: "Lead not found" };
+
+        const result = await extractLeadUpdatesFromTranscript(input.transcript, {
+          customerName: lead.customerName,
+          preferences: lead.preferences as any,
+          notes: lead.notes || "",
+        });
+
+        if (result.error) return { error: result.error };
+
+        const updates: any = {};
+        if (result.updates.notes) {
+          const timestamp = new Date().toLocaleString();
+          updates.notes = (lead.notes || "") + `\n\n[Voice Note ${timestamp}]\n${result.updates.notes}`;
+        }
+        if (result.updates.preferences) {
+          const existing = (lead.preferences || {}) as Record<string, any>;
+          updates.preferences = { ...existing, ...result.updates.preferences };
+        }
+        if (result.updates.status) {
+          updates.status = result.updates.status;
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await db.updateLead(input.leadId, updates);
+          // Re-run matching if preferences changed
+          if (updates.preferences) {
+            runMatchingForNewLead(input.leadId, ctx.dealership.id).catch(() => {});
+          }
+        }
+
+        await db.createActivityLog({
+          userId: ctx.user.id,
+          dealershipId: ctx.dealership.id,
+          action: "voice_note_added",
+          metadata: { leadId: input.leadId, customerName: lead.customerName, summary: result.summary },
+        });
+
+        return { summary: result.summary, updates: result.updates };
       }),
 
     reassign: managerProcedure
@@ -1090,6 +1179,54 @@ export const appRouter = router({
         const context = await buildInventoryContext(ctx.dealership.id);
         return askAboutInventory(input.question, context, input.conversationHistory);
       }),
+
+    prepareCall: protectedProcedure
+      .input(z.object({ matchId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (!isClaudeConfigured()) {
+          return { talkingPoints: "", error: "AI not configured." };
+        }
+        const match = await db.getMatchById(input.matchId);
+        if (!match) return { talkingPoints: "", error: "Match not found" };
+        const lead = await db.getLeadById(match.leadId);
+        if (!lead || lead.dealershipId !== ctx.dealership.id) return { talkingPoints: "", error: "Not found" };
+        const unit = await db.getInventoryById(match.inventoryId);
+        if (!unit) return { talkingPoints: "", error: "Unit not found" };
+
+        return prepareCallTalkingPoints(
+          { customerName: lead.customerName, preferences: lead.preferences, notes: lead.notes || undefined, preferredModel: lead.preferredModel || undefined },
+          { year: unit.year, make: unit.make, model: unit.model, price: unit.price || undefined, amenities: unit.amenities, bedType: unit.bedType || undefined, length: unit.length || undefined },
+          match.matchScore,
+          match.matchReason || undefined
+        );
+      }),
+
+    enhanceExplanation: protectedProcedure
+      .input(z.object({ matchId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (!isClaudeConfigured()) {
+          return { explanation: "", error: "AI not configured." };
+        }
+        const match = await db.getMatchById(input.matchId);
+        if (!match) return { explanation: "", error: "Match not found" };
+        const lead = await db.getLeadById(match.leadId);
+        if (!lead || lead.dealershipId !== ctx.dealership.id) return { explanation: "", error: "Not found" };
+        const unit = await db.getInventoryById(match.inventoryId);
+        if (!unit) return { explanation: "", error: "Unit not found" };
+
+        const result = await generateMatchExplanation(
+          { customerName: lead.customerName, preferences: lead.preferences, preferredModel: lead.preferredModel || undefined, notes: lead.notes || undefined },
+          { year: unit.year, make: unit.make, model: unit.model, price: unit.price || undefined, amenities: unit.amenities, bedType: unit.bedType || undefined, length: unit.length || undefined },
+          match.matchScore
+        );
+
+        // Store the enhanced explanation back
+        if (result.explanation) {
+          await db.updateMatch(match.id, { matchReason: result.explanation });
+        }
+
+        return result;
+      }),
   }),
 
   notifications: router({
@@ -1104,13 +1241,479 @@ export const appRouter = router({
     markAsRead: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(({ input }) => db.markNotificationAsRead(input.id)),
+
+    markAllRead: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const notifications = await db.getInAppNotifications(ctx.dealership.id, 100);
+        let marked = 0;
+        for (const n of notifications) {
+          if (!n.isRead) {
+            await db.markNotificationAsRead(n.id);
+            marked++;
+          }
+        }
+        return { marked };
+      }),
+
+    sendDailyDigest: managerProcedure
+      .mutation(async ({ ctx }) => {
+        const dealership = await db.getDealershipById(ctx.dealership.id);
+        if (!dealership?.email) return { error: "No dealership email configured" };
+
+        // Get matches from last 24 hours
+        const allMatches = await db.getAllDealershipMatches(ctx.dealership.id, undefined, 200);
+        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+        const recentMatches = allMatches.filter((m: any) => {
+          const created = new Date(m.match?.createdAt || 0).getTime();
+          return created >= oneDayAgo;
+        });
+
+        const result = await sendDailyDigestEmail(
+          dealership.email,
+          recentMatches,
+          dealership.name
+        );
+        return result;
+      }),
+
+    getPrefs: protectedProcedure
+      .query(({ ctx }) => ({
+        pushNotifications: (ctx.user as any).pushNotifications ?? true,
+        emailNotifications: (ctx.user as any).emailNotifications ?? true,
+        quietHoursStart: (ctx.user as any).quietHoursStart ?? null,
+        quietHoursEnd: (ctx.user as any).quietHoursEnd ?? null,
+      })),
+
+    updatePrefs: protectedProcedure
+      .input(z.object({
+        pushNotifications: z.boolean().optional(),
+        emailNotifications: z.boolean().optional(),
+        quietHoursStart: z.number().min(0).max(23).nullable().optional(),
+        quietHoursEnd: z.number().min(0).max(23).nullable().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateUser(ctx.user.id, input as any);
+        return { success: true };
+      }),
+
+    checkFollowUpTimers: managerProcedure
+      .mutation(async ({ ctx }) => {
+        const prefs = await db.getDealershipPreferences(ctx.dealership.id);
+        const yellowHours = 1;  // 1 hour default
+        const redHours = 4;     // 4 hours default
+        const criticalHours = 24;
+
+        const allMatches = await db.getAllDealershipMatches(ctx.dealership.id, undefined, 500);
+        const now = Date.now();
+        let yellowAlerts = 0, redAlerts = 0, criticalAlerts = 0;
+
+        for (const entry of allMatches) {
+          const match = entry.match as any;
+          if (!match) continue;
+          // Only check unacted matches (new or notified status)
+          if (match.status !== "new" && match.status !== "notified" && match.status !== "pending") continue;
+
+          const createdAt = new Date(match.createdAt).getTime();
+          const ageHours = (now - createdAt) / (1000 * 60 * 60);
+          const lead = entry.lead as any;
+
+          if (ageHours >= criticalHours) {
+            await db.createInAppNotification({
+              dealershipId: ctx.dealership.id,
+              leadId: match.leadId,
+              inventoryId: match.inventoryId,
+              matchId: match.id,
+              title: "CRITICAL: Unacted Match",
+              message: `Match for ${lead?.customerName || "Unknown"} has been unacted for ${Math.round(ageHours)} hours!`,
+            });
+            criticalAlerts++;
+          } else if (ageHours >= redHours) {
+            await db.createInAppNotification({
+              dealershipId: ctx.dealership.id,
+              leadId: match.leadId,
+              inventoryId: match.inventoryId,
+              matchId: match.id,
+              title: "Escalation: Unacted Match",
+              message: `${lead?.salespersonName || "Salesperson"} hasn't contacted ${lead?.customerName || "lead"} (${Math.round(ageHours)}h old)`,
+            });
+            redAlerts++;
+          } else if (ageHours >= yellowHours) {
+            await db.createInAppNotification({
+              dealershipId: ctx.dealership.id,
+              leadId: match.leadId,
+              inventoryId: match.inventoryId,
+              matchId: match.id,
+              title: "Reminder: Match Waiting",
+              message: `Match for ${lead?.customerName || "Unknown"} waiting ${Math.round(ageHours * 60)} minutes — follow up now!`,
+            });
+            yellowAlerts++;
+          }
+        }
+
+        return { yellowAlerts, redAlerts, criticalAlerts };
+      }),
   }),
 
-  // ─── Team Analytics (owner only, within dealership context) ───
+  // ─── Manager Dashboard (E9) ───
+  manager: router({
+    teamOverview: managerProcedure.query(async ({ ctx }) => {
+      const teamMembers = await db.getUsersByDealershipId(ctx.dealership.id);
+      const allLeads = await db.getAllDealershipLeads(ctx.dealership.id);
+      const allLeadIds = allLeads.map((l: any) => l.id);
+      let allMatches: any[] = [];
+      if (allLeadIds.length > 0) {
+        const raw = await db.getAllDealershipMatches(ctx.dealership.id, undefined, 2000);
+        allMatches = raw.map((r: any) => ({ ...r.match, lead: r.lead, unit: r.unit }));
+      }
+
+      const now = Date.now();
+      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+      const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - 7);
+
+      // Get recent activity per user
+      const logs = await db.getActivityLogs({ dealershipId: ctx.dealership.id, limit: 500 });
+
+      return teamMembers.map((member: any) => {
+        const memberLeads = allLeads.filter((l: any) => l.userId === member.id);
+        const leadsToday = memberLeads.filter((l: any) => new Date(l.createdAt) >= todayStart).length;
+        const leadsThisWeek = memberLeads.filter((l: any) => new Date(l.createdAt) >= weekStart).length;
+
+        const memberLeadIds = new Set(memberLeads.map((l: any) => l.id));
+        const memberMatches = allMatches.filter((m: any) => memberLeadIds.has(m.leadId));
+        const activeMatches = memberMatches.filter((m: any) =>
+          ["new", "notified", "contacted", "appointment"].includes(m.status)
+        );
+        const unactedMatches = memberMatches.filter((m: any) =>
+          ["new", "notified", "pending"].includes(m.status)
+        );
+        const oldestUnacted = unactedMatches.reduce((oldest: number, m: any) => {
+          const age = now - new Date(m.createdAt).getTime();
+          return age > oldest ? age : oldest;
+        }, 0);
+
+        const lastActivity = logs.find((l: any) => l.userId === member.id);
+
+        return {
+          userId: member.id,
+          name: member.name,
+          role: member.role,
+          isActive: member.isActive,
+          leadsToday,
+          leadsThisWeek,
+          activeMatchCount: activeMatches.length,
+          unactedMatchCount: unactedMatches.length,
+          oldestUnactedHours: Math.round((oldestUnacted / (1000 * 60 * 60)) * 10) / 10,
+          lastActivityAt: lastActivity?.createdAt || member.lastSignedIn || null,
+        };
+      });
+    }),
+
+    timerBoard: managerProcedure.query(async ({ ctx }) => {
+      const raw = await db.getAllDealershipMatches(ctx.dealership.id, undefined, 1000);
+      const now = Date.now();
+
+      const buckets = { newMatches: [] as any[], overdue: [] as any[], critical: [] as any[], contacted: [] as any[] };
+
+      for (const entry of raw) {
+        const m = entry.match as any;
+        if (!m) continue;
+        const lead = entry.lead as any;
+        const unit = entry.unit as any;
+        const ageMs = now - new Date(m.createdAt).getTime();
+        const ageHours = ageMs / (1000 * 60 * 60);
+
+        const card = {
+          matchId: m.id,
+          leadName: lead?.customerName || "Unknown",
+          unitName: unit ? `${unit.year} ${unit.make} ${unit.model}` : "Unknown",
+          salesperson: lead?.salespersonName || "Unassigned",
+          salespersonUserId: lead?.userId,
+          matchScore: m.matchScore,
+          status: m.status,
+          ageHours: Math.round(ageHours * 10) / 10,
+          createdAt: m.createdAt,
+        };
+
+        if (["contacted", "appointment"].includes(m.status)) {
+          buckets.contacted.push(card);
+        } else if (["new", "notified", "pending"].includes(m.status)) {
+          if (ageHours >= 24) buckets.critical.push(card);
+          else if (ageHours >= 4) buckets.overdue.push(card);
+          else buckets.newMatches.push(card);
+        }
+      }
+
+      return buckets;
+    }),
+
+    conversionFunnel: managerProcedure
+      .input(z.object({
+        days: z.number().min(1).max(365).default(30),
+        userId: z.number().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const raw = await db.getAllDealershipMatches(ctx.dealership.id, undefined, 2000);
+        const since = Date.now() - (input?.days || 30) * 24 * 60 * 60 * 1000;
+
+        let filtered = raw.filter((entry: any) => {
+          const m = entry.match as any;
+          return m && new Date(m.createdAt).getTime() >= since;
+        });
+
+        if (input?.userId) {
+          filtered = filtered.filter((entry: any) => (entry.lead as any)?.userId === input.userId);
+        }
+
+        const total = filtered.length;
+        const contacted = filtered.filter((e: any) => ["contacted", "appointment", "sold"].includes((e.match as any).status)).length;
+        const appointments = filtered.filter((e: any) => ["appointment", "sold"].includes((e.match as any).status)).length;
+        const sold = filtered.filter((e: any) => (e.match as any).status === "sold").length;
+
+        // Average time to contact
+        const contactTimes = filtered
+          .filter((e: any) => (e.match as any).customerContactedAt)
+          .map((e: any) => {
+            const m = e.match as any;
+            return new Date(m.customerContactedAt).getTime() - new Date(m.createdAt).getTime();
+          });
+        const avgContactTimeMs = contactTimes.length > 0
+          ? contactTimes.reduce((a: number, b: number) => a + b, 0) / contactTimes.length
+          : 0;
+
+        return {
+          total,
+          contacted,
+          contactedPct: total > 0 ? Math.round((contacted / total) * 100) : 0,
+          appointments,
+          appointmentsPct: total > 0 ? Math.round((appointments / total) * 100) : 0,
+          sold,
+          soldPct: total > 0 ? Math.round((sold / total) * 100) : 0,
+          avgContactTimeMinutes: Math.round(avgContactTimeMs / (1000 * 60)),
+          days: input?.days || 30,
+        };
+      }),
+
+    activityFeed: managerProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(100).default(50),
+        userId: z.number().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const logs = await db.getActivityLogs({
+          dealershipId: ctx.dealership.id,
+          userId: input?.userId,
+          limit: input?.limit || 50,
+        });
+        const userCache: Record<number, string> = {};
+        return Promise.all(
+          logs.map(async (log: any) => {
+            if (!userCache[log.userId]) {
+              const u = await db.getUserById(log.userId);
+              userCache[log.userId] = u?.name || "Unknown";
+            }
+            return { ...log, userName: userCache[log.userId] };
+          })
+        );
+      }),
+
+    reassignMatch: managerProcedure
+      .input(z.object({
+        matchId: z.number(),
+        newUserId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const match = await db.getMatchById(input.matchId);
+        if (!match) return { success: false as const, error: "Match not found" };
+        const lead = await db.getLeadById(match.leadId);
+        if (!lead || lead.dealershipId !== ctx.dealership.id) return { success: false as const, error: "Lead not found" };
+        const newUser = await db.getUserById(input.newUserId);
+        if (!newUser || newUser.dealershipId !== ctx.dealership.id) return { success: false as const, error: "User not found" };
+
+        await db.updateLead(lead.id, { userId: input.newUserId, salespersonName: newUser.name });
+
+        await db.createActivityLog({
+          userId: ctx.user.id,
+          dealershipId: ctx.dealership.id,
+          action: "match_reassigned",
+          metadata: { matchId: input.matchId, leadName: lead.customerName, from: lead.salespersonName, to: newUser.name },
+        });
+
+        await db.createInAppNotification({
+          dealershipId: ctx.dealership.id,
+          leadId: lead.id,
+          matchId: match.id,
+          title: "Match Reassigned to You",
+          message: `Your manager assigned you the match for ${lead.customerName}. Check it out!`,
+        });
+
+        return { success: true as const };
+      }),
+
+    nudge: managerProcedure
+      .input(z.object({
+        userId: z.number(),
+        matchId: z.number().optional(),
+        message: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const targetUser = await db.getUserById(input.userId);
+        if (!targetUser || targetUser.dealershipId !== ctx.dealership.id) {
+          return { success: false as const, error: "User not found" };
+        }
+
+        let nudgeMessage = input.message || "Your manager wants you to check your matches!";
+        if (input.matchId) {
+          const match = await db.getMatchById(input.matchId);
+          if (match) {
+            const lead = await db.getLeadById(match.leadId);
+            nudgeMessage = `Your manager wants you to check your match with ${lead?.customerName || "a customer"}`;
+          }
+        }
+
+        await db.createInAppNotification({
+          dealershipId: ctx.dealership.id,
+          matchId: input.matchId || null,
+          title: "Manager Nudge",
+          message: nudgeMessage,
+        });
+
+        await db.createActivityLog({
+          userId: ctx.user.id,
+          dealershipId: ctx.dealership.id,
+          action: "manager_nudge",
+          metadata: { targetUserId: input.userId, targetName: targetUser.name, matchId: input.matchId },
+        });
+
+        return { success: true as const };
+      }),
+
+    escalate: managerProcedure
+      .input(z.object({ matchId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const match = await db.getMatchById(input.matchId);
+        if (!match) return { success: false as const, error: "Match not found" };
+        const lead = await db.getLeadById(match.leadId);
+        if (!lead || lead.dealershipId !== ctx.dealership.id) return { success: false as const, error: "Not found" };
+
+        const ageHours = Math.round((Date.now() - new Date(match.createdAt).getTime()) / (1000 * 60 * 60));
+
+        await db.createInAppNotification({
+          dealershipId: ctx.dealership.id,
+          leadId: lead.id,
+          matchId: match.id,
+          title: "CRITICAL: Manager Escalation",
+          message: `Manager escalated: ${lead.customerName} match (${ageHours}h old). Respond immediately!`,
+        });
+
+        await db.createActivityLog({
+          userId: ctx.user.id,
+          dealershipId: ctx.dealership.id,
+          action: "manager_escalation",
+          metadata: { matchId: input.matchId, leadName: lead.customerName, ageHours },
+        });
+
+        return { success: true as const };
+      }),
+  }),
+
+  // ─── Analytics & Reporting (E12) ───
   analytics: router({
     team: ownerProcedure.query(async ({ ctx }) => {
       return db.getTeamAnalytics(ctx.dealership.id);
     }),
+
+    dealershipKpis: managerProcedure
+      .input(z.object({ days: z.number().min(1).max(365).default(30) }).optional())
+      .query(async ({ ctx, input }) => {
+        const days = input?.days || 30;
+        const since = Date.now() - days * 24 * 60 * 60 * 1000;
+        const raw = await db.getAllDealershipMatches(ctx.dealership.id, undefined, 2000);
+        const allLeads = await db.getAllDealershipLeads(ctx.dealership.id);
+        const inventoryData = await db.getUserInventory(ctx.dealership.id, undefined, 1000);
+        const allItems = inventoryData || [];
+
+        const periodMatches = raw.filter((e: any) => new Date((e.match as any)?.createdAt || 0).getTime() >= since);
+        const total = periodMatches.length;
+        const contacted = periodMatches.filter((e: any) => ["contacted", "appointment", "sold"].includes((e.match as any)?.status)).length;
+        const sold = periodMatches.filter((e: any) => (e.match as any)?.status === "sold").length;
+        const activeLeadCount = allLeads.filter((l: any) => !["sold", "lost", "inactive"].includes(l.status)).length;
+        const inStockCount = allItems.filter((i: any) => i.status === "in_stock").length;
+
+        return {
+          totalMatches: total,
+          contactedCount: contacted,
+          contactedPct: total > 0 ? Math.round((contacted / total) * 100) : 0,
+          dealsClosed: sold,
+          activeLeads: activeLeadCount,
+          activeInventory: inStockCount,
+          days,
+        };
+      }),
+
+    roi: managerProcedure
+      .input(z.object({
+        days: z.number().min(1).max(365).default(30),
+        avgGrossProfit: z.number().default(7500),
+        monthlyCost: z.number().default(500),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const days = input?.days || 30;
+        const avgGross = input?.avgGrossProfit || 7500;
+        const cost = input?.monthlyCost || 500;
+        const since = Date.now() - days * 24 * 60 * 60 * 1000;
+        const raw = await db.getAllDealershipMatches(ctx.dealership.id, undefined, 2000);
+        const sold = raw.filter((e: any) => {
+          const m = e.match as any;
+          return m?.status === "sold" && new Date(m.createdAt).getTime() >= since;
+        }).length;
+
+        const recoveredGross = sold * avgGross;
+        const roiMultiple = cost > 0 ? Math.round((recoveredGross / cost) * 10) / 10 : 0;
+
+        return {
+          dealsClosed: sold,
+          avgGrossProfit: avgGross,
+          recoveredGross,
+          monthlyCost: cost,
+          roiMultiple,
+          days,
+        };
+      }),
+
+    leaderboard: managerProcedure
+      .input(z.object({ days: z.number().min(1).max(365).default(30) }).optional())
+      .query(async ({ ctx, input }) => {
+        const days = input?.days || 30;
+        const since = Date.now() - days * 24 * 60 * 60 * 1000;
+        const teamMembers = await db.getUsersByDealershipId(ctx.dealership.id);
+        const allLeads = await db.getAllDealershipLeads(ctx.dealership.id);
+        const raw = await db.getAllDealershipMatches(ctx.dealership.id, undefined, 2000);
+        const allMatches = raw.map((r: any) => ({ ...r.match, leadId: (r.match as any)?.leadId }));
+
+        const board = teamMembers.map((member: any) => {
+          const memberLeads = allLeads.filter((l: any) => l.userId === member.id);
+          const recentLeads = memberLeads.filter((l: any) => new Date(l.createdAt).getTime() >= since);
+          const memberLeadIds = new Set(memberLeads.map((l: any) => l.id));
+          const memberMatches = allMatches.filter((m: any) => memberLeadIds.has(m.leadId));
+          const recentMatches = memberMatches.filter((m: any) => new Date(m.createdAt).getTime() >= since);
+          const acted = recentMatches.filter((m: any) => ["contacted", "appointment", "sold"].includes(m.status)).length;
+          const deals = recentMatches.filter((m: any) => m.status === "sold").length;
+          const responseRate = recentMatches.length > 0 ? Math.round((acted / recentMatches.length) * 100) : 0;
+
+          return {
+            userId: member.id,
+            name: member.name,
+            role: member.role,
+            leadsCaptured: recentLeads.length,
+            matchesReceived: recentMatches.length,
+            matchesActed: acted,
+            responseRate,
+            deals,
+          };
+        }).sort((a: any, b: any) => b.deals - a.deals || b.responseRate - a.responseRate);
+
+        return { board, days };
+      }),
   }),
 
   // ─── Owner Portal Routes ───
@@ -1119,11 +1722,50 @@ export const appRouter = router({
       return db.getPlatformStats();
     }),
 
+    churnRisk: ownerProcedure.query(async () => {
+      const allDealerships = await db.getAllDealerships();
+      const now = Date.now();
+      const risks = [];
+
+      for (const d of allDealerships) {
+        const members = await db.getUsersByDealershipId(d.id);
+        const logs = await db.getActivityLogs({ dealershipId: d.id, limit: 1 });
+        const lastActivity = logs[0]?.createdAt ? new Date(logs[0].createdAt).getTime() : 0;
+        const daysSinceActivity = lastActivity > 0 ? Math.round((now - lastActivity) / (1000 * 60 * 60 * 24)) : 999;
+
+        const stats = await db.getDealershipStats(d.id);
+        const activeUsers = members.filter((m: any) => m.isActive && m.lastSignedIn).length;
+        const recentLogins = members.filter((m: any) => {
+          if (!m.lastSignedIn) return false;
+          return (now - new Date(m.lastSignedIn).getTime()) < 3 * 24 * 60 * 60 * 1000;
+        }).length;
+
+        let riskLevel: "low" | "medium" | "high" = "low";
+        if (daysSinceActivity >= 7 || recentLogins === 0) riskLevel = "high";
+        else if (daysSinceActivity >= 3) riskLevel = "medium";
+
+        risks.push({
+          dealershipId: d.id,
+          name: d.name,
+          activeUsers,
+          recentLogins,
+          daysSinceActivity,
+          matchCount: (stats as any)?.inventory || 0,
+          riskLevel,
+        });
+      }
+
+      return risks.sort((a: any, b: any) => {
+        const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
+        return (order[a.riskLevel] ?? 2) - (order[b.riskLevel] ?? 2);
+      });
+    }),
+
     dealerships: router({
       list: ownerProcedure.query(async () => {
         const allDealerships = await db.getAllDealerships();
         const result = await Promise.all(
-          allDealerships.map(async (d) => {
+          allDealerships.map(async (d: any) => {
             const stats = await db.getDealershipStats(d.id);
             return { ...d, stats };
           })

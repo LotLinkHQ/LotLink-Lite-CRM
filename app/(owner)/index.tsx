@@ -18,6 +18,7 @@ export default function OwnerDashboard() {
   const { user, logout } = useDealershipAuth();
   const { data: stats, isLoading } = trpc.owner.dashboard.useQuery();
   const { data: recentActivity } = trpc.owner.activity.list.useQuery({ limit: 10 });
+  const { data: churnRisk } = trpc.owner.churnRisk.useQuery(undefined, { refetchInterval: 60000 });
 
   if (isLoading) {
     return (
@@ -65,6 +66,35 @@ export default function OwnerDashboard() {
           <StatCard emoji="📋" label="Leads" value={stats?.leads ?? 0} />
           <StatCard emoji="🚐" label="Inventory" value={stats?.inventory ?? 0} />
         </View>
+
+        {/* Churn Risk */}
+        {churnRisk && churnRisk.filter((d: any) => d.riskLevel !== "low").length > 0 && (
+          <>
+            <View style={s.sectionLabel}>
+              <Text style={s.sectionLabelText}>Churn Risk</Text>
+            </View>
+            {churnRisk.filter((d: any) => d.riskLevel !== "low").map((d: any) => (
+              <View key={d.dealershipId} style={[s.activityRow, {
+                backgroundColor: d.riskLevel === "high" ? "#3d1f17" : "#3d3017",
+                borderRadius: 8, marginHorizontal: 14, marginBottom: 6,
+              }]}>
+                <View style={[s.activityDot, {
+                  backgroundColor: d.riskLevel === "high" ? C.red : C.amber,
+                }]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={s.activityUser}>{d.name}</Text>
+                  <Text style={s.activityAction}>
+                    {d.daysSinceActivity}d since activity · {d.recentLogins} logins (3d) · {d.activeUsers} active users
+                  </Text>
+                </View>
+                <Text style={{
+                  fontSize: 10, fontWeight: "700", textTransform: "uppercase",
+                  color: d.riskLevel === "high" ? C.red : C.amber,
+                }}>{d.riskLevel}</Text>
+              </View>
+            ))}
+          </>
+        )}
 
         {/* Recent Activity */}
         <View style={s.sectionLabel}>

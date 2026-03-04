@@ -1,4 +1,5 @@
-import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import { useState, useRef } from "react";
+import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, StyleSheet, Alert, Platform } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useDealershipAuth } from "@/hooks/use-dealership-auth";
@@ -15,7 +16,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, isAuthenticated, isOwner } = useDealershipAuth();
+  const { user, isAuthenticated, isOwner, isManager } = useDealershipAuth();
 
   const { data: leadsData, isLoading: leadsLoading } = trpc.leads.list.useQuery(
     {},
@@ -35,6 +36,19 @@ export default function HomeScreen() {
   const { data: teamData } = trpc.analytics.team.useQuery(
     undefined,
     { enabled: isAuthenticated && isOwner, refetchInterval: 30000 }
+  );
+
+  const { data: kpis } = trpc.analytics.dealershipKpis.useQuery(
+    { days: 30 },
+    { enabled: isAuthenticated && isManager, refetchInterval: 30000 }
+  );
+  const { data: roi } = trpc.analytics.roi.useQuery(
+    undefined,
+    { enabled: isAuthenticated && isManager, refetchInterval: 60000 }
+  );
+  const { data: leaderboard } = trpc.analytics.leaderboard.useQuery(
+    { days: 30 },
+    { enabled: isAuthenticated && isManager, refetchInterval: 30000 }
   );
 
   const isLoading = leadsLoading || inventoryLoading || matchesLoading;
@@ -90,7 +104,7 @@ export default function HomeScreen() {
             <Text style={s.logoText}>LL</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={s.headerTitle}>Dashboard</Text>
+            <Text style={s.headerTitle}>{user?.dealershipName || "Dashboard"}</Text>
             <Text style={s.headerSub}>
               {user?.name || "Salesperson"} · {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ""}
             </Text>
@@ -140,6 +154,58 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* ─── Analytics (Manager+) ─── */}
+        {isManager && kpis && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>This Month's Impact</Text>
+            <View style={s.row}>
+              <View style={[s.statCard, { borderLeftColor: C.teal }]}>
+                <Text style={s.statLabel}>Matches</Text>
+                <Text style={[s.statNum, { color: C.teal }]}>{kpis.totalMatches}</Text>
+                <Text style={s.statSub}>{kpis.contactedPct}% contacted</Text>
+              </View>
+              <View style={[s.statCard, { borderLeftColor: C.green }]}>
+                <Text style={s.statLabel}>Deals Closed</Text>
+                <Text style={[s.statNum, { color: C.green }]}>{kpis.dealsClosed}</Text>
+                <Text style={s.statSub}>from AI matches</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {isManager && roi && roi.dealsClosed > 0 && (
+          <View style={[s.section, { backgroundColor: C.surface, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: C.rule }]}>
+            <Text style={[s.sectionTitle, { marginBottom: 8 }]}>ROI Report</Text>
+            <Text style={{ fontSize: 32, fontWeight: "800", color: C.green, marginBottom: 4 }}>
+              ${roi.recoveredGross.toLocaleString()}
+            </Text>
+            <Text style={{ color: C.muted, fontSize: 13, marginBottom: 12 }}>
+              Estimated recovered gross profit ({roi.dealsClosed} deals x ${roi.avgGrossProfit.toLocaleString()} avg)
+            </Text>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderTopColor: C.rule, paddingTop: 10 }}>
+              <Text style={{ color: C.muted, fontSize: 13 }}>Monthly cost: ${roi.monthlyCost}</Text>
+              <Text style={{ color: C.green, fontSize: 15, fontWeight: "800" }}>ROI: {roi.roiMultiple}x</Text>
+            </View>
+          </View>
+        )}
+
+        {isManager && leaderboard && leaderboard.board.length > 1 && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>Leaderboard (This Month)</Text>
+            {leaderboard.board.map((rep: any, i: number) => (
+              <View key={rep.userId} style={[s.teamCard, { flexDirection: "row", alignItems: "center", gap: 12 }]}>
+                <Text style={{ fontSize: 18, fontWeight: "800", color: i === 0 ? C.amber : C.muted, width: 28 }}>
+                  #{i + 1}
+                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.teamName}>{rep.name}</Text>
+                  <Text style={s.teamRole}>{rep.deals} deals · {rep.responseRate}% response · {rep.leadsCaptured} leads</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* ─── Team Performance (Owner Only) ─── */}
         {isOwner && teamMembers.length > 0 && (
@@ -268,6 +334,15 @@ export default function HomeScreen() {
           ))}
         </View>
       </ScrollView>
+
+      {/* Voice Capture FAB */}
+      <TouchableOpacity
+        onPress={() => router.push("/(tabs)/leads" as any)}
+        style={s.fab}
+      >
+        <Text style={s.fabIcon}>🎙</Text>
+        <Text style={s.fabText}>New Lead</Text>
+      </TouchableOpacity>
     </ScreenContainer>
   );
 }
@@ -332,4 +407,13 @@ const s = StyleSheet.create({
   teamStatNum: { fontSize: 16, fontWeight: "700", color: C.ink },
   teamStatLabel: { fontSize: 9, color: C.muted, marginTop: 2, textTransform: "uppercase", letterSpacing: 0.3 },
   teamLastSeen: { fontSize: 10, color: C.muted, marginTop: 8 },
+  fab: {
+    position: "absolute", bottom: 20, right: 20,
+    backgroundColor: C.teal, borderRadius: 28, paddingHorizontal: 20, paddingVertical: 14,
+    flexDirection: "row", alignItems: "center", gap: 8,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
+    elevation: 8,
+  },
+  fabIcon: { fontSize: 20 },
+  fabText: { color: C.white, fontWeight: "700", fontSize: 15 },
 });

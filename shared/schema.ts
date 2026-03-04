@@ -33,6 +33,10 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   lastSignedIn: timestamp("last_signed_in"),
+  pushNotifications: boolean("push_notifications").default(true).notNull(),
+  emailNotifications: boolean("email_notifications").default(true).notNull(),
+  quietHoursStart: integer("quiet_hours_start"),  // hour 0-23, null = disabled
+  quietHoursEnd: integer("quiet_hours_end"),
 });
 
 export type User = typeof users.$inferSelect;

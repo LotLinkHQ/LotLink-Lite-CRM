@@ -172,41 +172,54 @@ function parseCSV(text: string): Record<string, string>[] {
 function useVoiceRecorder() {
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
-  const mediaRef = useRef<any>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const [elapsed, setElapsed] = useState(0);
+  const [liveTranscript, setLiveTranscript] = useState("");
+  const recognitionRef = useRef<any>(null);
+  const transcriptRef = useRef("");
+  const timerRef = useRef<any>(null);
 
-  const start = async () => {
-    if (Platform.OS !== "web") { Alert.alert("Web Only", "Voice notes require the web browser."); return; }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      chunksRef.current = [];
-      recorder.ondataavailable = (e: any) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-      recorder.start();
-      mediaRef.current = recorder;
-      setRecording(true);
-    } catch {
-      Alert.alert("Mic Access", "Please allow microphone access to use voice notes.");
-    }
+  const start = () => {
+    if (Platform.OS !== "web") { Alert.alert("Web Only", "Voice requires a web browser."); return; }
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) { Alert.alert("Not Supported", "Use Chrome or Edge for voice recording."); return; }
+
+    setLiveTranscript("");
+    transcriptRef.current = "";
+    setElapsed(0);
+
+    const rec = new SR();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = "en-US";
+
+    rec.onresult = (e: any) => {
+      let final = "", interim = "";
+      for (let i = 0; i < e.results.length; i++) {
+        if (e.results[i].isFinal) final += e.results[i][0].transcript + " ";
+        else interim += e.results[i][0].transcript;
+      }
+      transcriptRef.current = final;
+      setLiveTranscript(final + interim);
+    };
+    rec.onerror = () => {};
+    rec.onend = () => { if (recognitionRef.current) try { rec.start(); } catch (_) {} };
+
+    rec.start();
+    recognitionRef.current = rec;
+    setRecording(true);
+    timerRef.current = setInterval(() => {
+      setElapsed(p => { if (p >= 179) { stop(); return 180; } return p + 1; });
+    }, 1000);
   };
 
-  const stop = (): Promise<string> => {
-    return new Promise((resolve) => {
-      if (!mediaRef.current) { resolve(""); return; }
-      mediaRef.current.onstop = async () => {
-        setRecording(false);
-        setTranscribing(true);
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        setTranscribing(false);
-        resolve("[Voice note recorded - " + Math.round(blob.size / 1024) + "KB]");
-        mediaRef.current.stream.getTracks().forEach((t: any) => t.stop());
-        mediaRef.current = null;
-      };
-      mediaRef.current.stop();
-    });
+  const stop = (): string => {
+    if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch (_) {} recognitionRef.current = null; }
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setRecording(false);
+    return transcriptRef.current.trim() || liveTranscript.trim();
   };
 
-  return { recording, transcribing, start, stop };
+  return { recording, transcribing, elapsed, liveTranscript, start, stop };
 }
 
 // ═════════════════════════════════════════════════════════════════════
@@ -281,6 +294,34 @@ export default function LeadsScreen() {
     onError: (e) => {
       const msg = `Photo extraction failed: ${e.message}`;
       Platform.OS === "web" ? window.alert(msg) : Alert.alert("Error", msg);
+    },
+  });
+  const voiceExtractMutation = trpc.leads.extractFromVoice.useMutation({
+    onSuccess: (data) => {
+      if (data.error) {
+        Platform.OS === "web" ? window.alert(data.error) : Alert.alert("Error", data.error);
+        return;
+      }
+      const d = data.data;
+      setNewLead(prev => ({
+        ...prev,
+        customerName:     d.customerName || prev.customerName,
+        customerPhone:    d.customerPhone || prev.customerPhone,
+        customerEmail:    d.customerEmail || prev.customerEmail,
+        preferredMake:    d.preferredMake || prev.preferredMake,
+        preferredModel:   d.preferredModel || prev.preferredModel,
+        preferredYear:    d.preferredYear || prev.preferredYear,
+        preferredBedType: d.bedType || prev.preferredBedType,
+        minLength:        d.minLength || prev.minLength,
+        maxPrice:         d.budget || prev.maxPrice,
+        notes:            d.notes ? (prev.notes ? prev.notes + "\n" + d.notes : d.notes) : prev.notes,
+        preferenceType:   d.preferredModel ? "model" : (d.rvType ? "features" : prev.preferenceType),
+      }));
+      const msg = "Voice note processed! Review the extracted fields.";
+      Platform.OS === "web" ? window.alert(msg) : Alert.alert("Extracted", msg);
+    },
+    onError: (e) => {
+      Platform.OS === "web" ? window.alert(e.message) : Alert.alert("Error", e.message);
     },
   });
   const importCsvMutation = trpc.leads.importCsv.useMutation({
@@ -410,10 +451,13 @@ export default function LeadsScreen() {
     }
   };
 
-  const handleVoiceNote = async () => {
+  const handleVoiceNote = () => {
     if (voice.recording) {
-      const text = await voice.stop();
-      if (text) setNewLead(prev => ({ ...prev, notes: prev.notes ? prev.notes + "\n" + text : text }));
+      const transcript = voice.stop();
+      if (transcript) {
+        // Send to AI for structured extraction
+        voiceExtractMutation.mutate({ transcript });
+      }
     } else {
       voice.start();
     }
@@ -690,12 +734,23 @@ export default function LeadsScreen() {
               <TouchableOpacity
                 style={[s.voiceBtn, voice.recording && s.voiceBtnActive]}
                 onPress={handleVoiceNote}
+                disabled={voiceExtractMutation.isPending}
               >
-                <Text style={s.voiceBtnIcon}>{voice.recording ? "⏹" : "🎙"}</Text>
+                <Text style={s.voiceBtnIcon}>{voice.recording ? "⏹" : voiceExtractMutation.isPending ? "⏳" : "🎙"}</Text>
                 <Text style={[s.voiceBtnText, voice.recording && { color: C.red }]}>
-                  {voice.recording ? "Stop Recording" : voice.transcribing ? "Processing..." : "Record Voice Note"}
+                  {voice.recording
+                    ? `Stop Recording (${Math.floor(voice.elapsed / 60)}:${(voice.elapsed % 60).toString().padStart(2, "0")})`
+                    : voiceExtractMutation.isPending
+                    ? "AI Extracting..."
+                    : "Voice-to-Lead"}
                 </Text>
               </TouchableOpacity>
+              {voice.recording && voice.liveTranscript ? (
+                <View style={s.liveTranscript}>
+                  <Text style={s.liveTranscriptLabel}>LIVE TRANSCRIPT</Text>
+                  <Text style={s.liveTranscriptText} numberOfLines={3}>{voice.liveTranscript}</Text>
+                </View>
+              ) : null}
 
               {editingLead && (
                 <>
@@ -840,6 +895,9 @@ const s = StyleSheet.create({
   voiceBtnActive:  { backgroundColor: C.redLite, borderColor: "rgba(242,92,58,0.3)" },
   voiceBtnIcon:    { fontSize: 22 },
   voiceBtnText:    { fontSize: 14, fontWeight: "700", color: C.teal },
+  liveTranscript:      { backgroundColor: C.surface, borderRadius: 8, padding: 10, marginTop: 6, borderWidth: 1, borderColor: C.rule },
+  liveTranscriptLabel: { fontSize: 9, fontWeight: "700", color: C.muted, letterSpacing: 0.5, marginBottom: 4 },
+  liveTranscriptText:  { fontSize: 12, color: C.ink, lineHeight: 18 },
 
   modalActions:    { flexDirection: "row", gap: 10, marginTop: 20 },
   cancelBtn:       { flex: 1, borderWidth: 1, borderColor: C.rule, borderRadius: 12, paddingVertical: 14, alignItems: "center", backgroundColor: C.surface },

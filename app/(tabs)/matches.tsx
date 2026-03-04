@@ -64,6 +64,7 @@ export default function MatchesScreen() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [dismissReason, setDismissReason] = useState<string | null>(null);
+  const [callPrep, setCallPrep] = useState<string | null>(null);
 
   const { data: infiniteMatches, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     trpc.matches.list.useInfiniteQuery(
@@ -80,6 +81,16 @@ export default function MatchesScreen() {
 
   const updateStatusMutation = trpc.matches.updateStatus.useMutation({
     onSuccess: () => { refetch(); setSelectedMatch(null); setContactNotes(""); },
+  });
+
+  const prepareCallMutation = trpc.ai.prepareCall.useMutation({
+    onSuccess: (data) => {
+      if (data.talkingPoints) setCallPrep(data.talkingPoints);
+      else if (data.error) { Platform.OS === "web" ? window.alert(data.error) : Alert.alert("Error", data.error); }
+    },
+  });
+  const enhanceExplanationMutation = trpc.ai.enhanceExplanation.useMutation({
+    onSuccess: () => refetch(),
   });
 
   const runScanMutation = trpc.matches.runScan.useMutation({
@@ -298,6 +309,43 @@ export default function MatchesScreen() {
                       </View>
                     </View>
 
+                    {/* AI Actions */}
+                    <View style={{ flexDirection: "row", gap: 8, marginBottom: 14 }}>
+                      <TouchableOpacity
+                        onPress={() => { setCallPrep(null); prepareCallMutation.mutate({ matchId: match.id }); }}
+                        disabled={prepareCallMutation.isLoading}
+                        style={[s.aiBtn, { flex: 1 }]}
+                      >
+                        {prepareCallMutation.isLoading
+                          ? <ActivityIndicator color={C.teal} size="small" />
+                          : <><Ionicons name="chatbubble-ellipses-outline" size={16} color={C.teal} /><Text style={s.aiBtnText}>Prepare Me</Text></>
+                        }
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => enhanceExplanationMutation.mutate({ matchId: match.id })}
+                        disabled={enhanceExplanationMutation.isLoading}
+                        style={[s.aiBtn, { flex: 1 }]}
+                      >
+                        {enhanceExplanationMutation.isLoading
+                          ? <ActivityIndicator color={C.teal} size="small" />
+                          : <><Ionicons name="sparkles-outline" size={16} color={C.teal} /><Text style={s.aiBtnText}>AI Explain</Text></>
+                        }
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Call prep card */}
+                    {callPrep && (
+                      <View style={s.callPrepCard}>
+                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                          <Text style={s.callPrepTitle}>Call Prep</Text>
+                          <TouchableOpacity onPress={() => setCallPrep(null)}>
+                            <Ionicons name="close-circle" size={18} color={C.muted} />
+                          </TouchableOpacity>
+                        </View>
+                        <Text style={s.callPrepText}>{callPrep}</Text>
+                      </View>
+                    )}
+
                     {/* Actions */}
                     {status !== "sold" && status !== "dismissed" && (
                       <>
@@ -408,4 +456,16 @@ const s = StyleSheet.create({
   dismissGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 },
   dismissChip: { backgroundColor: C.surface, borderWidth: 1, borderColor: C.rule, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
   dismissChipText: { fontSize: 12, color: C.ink, fontWeight: "600" },
+  aiBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+    backgroundColor: C.teal + "15", borderWidth: 1, borderColor: C.teal + "40",
+    borderRadius: 10, paddingVertical: 12,
+  },
+  aiBtnText: { color: C.teal, fontWeight: "700", fontSize: 13 },
+  callPrepCard: {
+    backgroundColor: C.surface, borderRadius: 10, padding: 14,
+    marginBottom: 14, borderWidth: 1, borderColor: C.teal + "40",
+  },
+  callPrepTitle: { fontSize: 14, fontWeight: "700", color: C.teal },
+  callPrepText: { fontSize: 13, color: C.ink, lineHeight: 20 },
 });

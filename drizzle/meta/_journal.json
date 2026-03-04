@@ -64,6 +64,13 @@
       "when": 1772900000000,
       "tag": "0008_enhance_matching_engine",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1773000000000,
+      "tag": "0009_add_notification_preferences",
+      "breakpoints": true
     }
   ]
 }

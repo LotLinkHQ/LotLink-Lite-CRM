@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, ActivityIndicator,
-  Linking, Platform, StyleSheet,
+  Linking, Platform, Alert, StyleSheet,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
@@ -20,14 +20,83 @@ function getStatusBadge(status: string) {
   }
 }
 
+function useVoiceRecorder() {
+  const [recording, setRecording] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [liveTranscript, setLiveTranscript] = useState("");
+  const recognitionRef = useRef<any>(null);
+  const transcriptRef = useRef("");
+  const timerRef = useRef<any>(null);
+
+  const start = () => {
+    if (Platform.OS !== "web") return;
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) { Alert.alert("Not Supported", "Use Chrome or Edge."); return; }
+    setLiveTranscript(""); transcriptRef.current = ""; setElapsed(0);
+    const rec = new SR();
+    rec.continuous = true; rec.interimResults = true; rec.lang = "en-US";
+    rec.onresult = (e: any) => {
+      let final = "", interim = "";
+      for (let i = 0; i < e.results.length; i++) {
+        if (e.results[i].isFinal) final += e.results[i][0].transcript + " ";
+        else interim += e.results[i][0].transcript;
+      }
+      transcriptRef.current = final;
+      setLiveTranscript(final + interim);
+    };
+    rec.onerror = () => {};
+    rec.onend = () => { if (recognitionRef.current) try { rec.start(); } catch (_) {} };
+    rec.start();
+    recognitionRef.current = rec;
+    setRecording(true);
+    timerRef.current = setInterval(() => {
+      setElapsed(p => { if (p >= 179) { stop(); return 180; } return p + 1; });
+    }, 1000);
+  };
+
+  const stop = (): string => {
+    if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch (_) {} recognitionRef.current = null; }
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setRecording(false);
+    return transcriptRef.current.trim() || liveTranscript.trim();
+  };
+
+  return { recording, elapsed, liveTranscript, start, stop };
+}
+
 export default function LeadDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const leadId = parseInt(id || "0");
+  const voice = useVoiceRecorder();
 
+  const utils = trpc.useUtils();
   const { data: lead, isLoading } = trpc.leads.getById.useQuery(
     { id: leadId },
     { enabled: leadId > 0 }
   );
+
+  const appendVoiceMutation = trpc.leads.appendVoiceNote.useMutation({
+    onSuccess: (data: any) => {
+      if (data?.error) {
+        Platform.OS === "web" ? window.alert(data.error) : Alert.alert("Error", data.error);
+        return;
+      }
+      utils.leads.getById.invalidate({ id: leadId });
+      const msg = data?.summary || "Voice note added!";
+      Platform.OS === "web" ? window.alert(msg) : Alert.alert("Updated", msg);
+    },
+  });
+
+  const handleVoiceNote = () => {
+    if (voice.recording) {
+      const transcript = voice.stop();
+      if (transcript) {
+        appendVoiceMutation.mutate({ leadId, transcript });
+      }
+    } else {
+      voice.start();
+    }
+  };
 
   if (isLoading) {
     return (
@@ -109,6 +178,28 @@ export default function LeadDetailScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Voice Note */}
+        <TouchableOpacity
+          style={[s.voiceNoteBtn, voice.recording && s.voiceNoteBtnActive]}
+          onPress={handleVoiceNote}
+          disabled={appendVoiceMutation.isPending}
+        >
+          <Text style={s.voiceNoteIcon}>{voice.recording ? "⏹" : appendVoiceMutation.isPending ? "⏳" : "🎙"}</Text>
+          <Text style={[s.voiceNoteText, voice.recording && { color: C.red }]}>
+            {voice.recording
+              ? `Stop (${Math.floor(voice.elapsed / 60)}:${(voice.elapsed % 60).toString().padStart(2, "0")})`
+              : appendVoiceMutation.isPending
+              ? "AI Processing..."
+              : "Add Voice Note"}
+          </Text>
+        </TouchableOpacity>
+        {voice.recording && voice.liveTranscript ? (
+          <View style={s.liveTranscript}>
+            <Text style={s.liveTranscriptLabel}>LIVE TRANSCRIPT</Text>
+            <Text style={s.liveTranscriptText} numberOfLines={3}>{voice.liveTranscript}</Text>
+          </View>
+        ) : null}
 
         {/* Contact Info */}
         <Text style={s.section}>Contact Info</Text>
@@ -285,4 +376,15 @@ const s = StyleSheet.create({
   scoreBadge:   { borderWidth: 2, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
   scoreText:    { fontSize: 14, fontWeight: "800" },
   matchReasons: { fontSize: 11, color: C.muted, marginTop: 8 },
+  voiceNoteBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    backgroundColor: C.surface, borderWidth: 1, borderColor: C.rule, borderRadius: 12,
+    paddingVertical: 14, marginBottom: 8,
+  },
+  voiceNoteBtnActive: { backgroundColor: "#2d1215", borderColor: "rgba(242,92,58,0.3)" },
+  voiceNoteIcon: { fontSize: 20 },
+  voiceNoteText: { fontSize: 14, fontWeight: "700", color: C.teal },
+  liveTranscript: { backgroundColor: C.surface, borderRadius: 8, padding: 10, marginBottom: 8, borderWidth: 1, borderColor: C.rule },
+  liveTranscriptLabel: { fontSize: 9, fontWeight: "700", color: C.muted, letterSpacing: 0.5, marginBottom: 4 },
+  liveTranscriptText: { fontSize: 12, color: C.ink, lineHeight: 18 },
 });

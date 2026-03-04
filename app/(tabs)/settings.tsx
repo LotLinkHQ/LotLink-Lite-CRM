@@ -42,6 +42,10 @@ export default function SettingsScreen() {
     },
   });
   const revokeInvite = trpc.invites.revoke.useMutation({ onSuccess: () => refetchInvites() });
+  const resendInvite = trpc.invites.resend.useMutation({
+    onSuccess: (data) => { if (data.success) showError("Invite resent (7 more days)"); },
+  });
+  const updateBranding = trpc.dealership.updateBranding.useMutation({ onSuccess: () => refetchDealership() });
   const updateRole = trpc.users.updateRole.useMutation({ onSuccess: () => refetchTeam() });
   const toggleActive = trpc.users.deactivate.useMutation({ onSuccess: () => refetchTeam() });
 
@@ -50,10 +54,17 @@ export default function SettingsScreen() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"salesperson" | "manager" | "admin">("salesperson");
+  const [brandColor, setBrandColor] = useState("");
+  const [brandLogo, setBrandLogo] = useState("");
 
   useEffect(() => {
     if (dealership?.websiteUrl && !websiteEdited) setWebsiteUrl(dealership.websiteUrl);
-  }, [dealership?.websiteUrl]);
+    if (dealership?.branding) {
+      const b = dealership.branding as any;
+      if (b.primaryColor && !brandColor) setBrandColor(b.primaryColor);
+      if (b.logoUrl && !brandLogo) setBrandLogo(b.logoUrl);
+    }
+  }, [dealership?.websiteUrl, dealership?.branding]);
 
   const showError = (msg: string) => Platform.OS === "web" ? window.alert(msg) : Alert.alert("Error", msg);
   const handleLogout = async () => { await logout(); router.replace("/login"); };
@@ -95,6 +106,45 @@ export default function SettingsScreen() {
             </View>
           </View>
         </View>
+
+        {/* Branding */}
+        {isAdmin && (
+          <View style={s.card}>
+            <Text style={s.cardTitle}>Dealership Branding</Text>
+            <Text style={s.cardSub}>Customize how your dealership appears in the app</Text>
+            <Text style={s.fieldLabel}>Dealership Name</Text>
+            <Text style={[s.profileValue, { marginBottom: 12 }]}>{dealership?.name || "—"}</Text>
+            <Text style={s.fieldLabel}>Logo URL</Text>
+            <TextInput
+              value={brandLogo}
+              onChangeText={setBrandLogo}
+              placeholder="https://yourdealership.com/logo.png"
+              placeholderTextColor={C.muted}
+              autoCapitalize="none"
+              style={[s.textInput, { marginBottom: 8 }]}
+            />
+            <Text style={s.fieldLabel}>Primary Color</Text>
+            <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
+              {["#1d9a9a", "#0B5E7E", "#2563eb", "#7c3aed", "#dc2626", "#059669"].map((c) => (
+                <TouchableOpacity
+                  key={c}
+                  onPress={() => setBrandColor(c)}
+                  style={{
+                    width: 32, height: 32, borderRadius: 16, backgroundColor: c,
+                    borderWidth: brandColor === c ? 3 : 0, borderColor: C.white,
+                  }}
+                />
+              ))}
+            </View>
+            <TouchableOpacity
+              onPress={() => updateBranding.mutate({ primaryColor: brandColor || undefined, logoUrl: brandLogo || undefined })}
+              disabled={updateBranding.isLoading}
+              style={s.saveUrlBtn}
+            >
+              <Text style={s.saveUrlBtnText}>{updateBranding.isLoading ? "Saving..." : "Save Branding"}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Team */}
         {isAdmin && (
@@ -148,9 +198,14 @@ export default function SettingsScreen() {
                       <Text style={s.inviteEmail}>{invite.email}</Text>
                       <Text style={s.inviteRole}>{ROLE_LABELS[invite.role]}</Text>
                     </View>
-                    <TouchableOpacity onPress={() => revokeInvite.mutate({ id: invite.id })}>
-                      <Text style={[s.actionLink, { color: C.red }]}>Revoke</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: "row", gap: 10 }}>
+                      <TouchableOpacity onPress={() => resendInvite.mutate({ id: invite.id })}>
+                        <Text style={[s.actionLink, { color: C.teal }]}>Resend</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => revokeInvite.mutate({ id: invite.id })}>
+                        <Text style={[s.actionLink, { color: C.red }]}>Revoke</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 ))}
               </View>
