@@ -59,17 +59,17 @@ export async function seedDatabase() {
         email: "jonathan@lotlink.io",
         passwordHash: ownerPasswordHash,
         name: "Jonathan",
-        dealershipId: null,
+        dealershipId: dealership!.id,
         role: "owner",
       });
       console.log("[Seed] Owner account created");
     } else {
-      // Always update password to match env var
+      // Always update password and link to dealership
       const db = getDb();
       const { users } = await import("../shared/schema");
       const { eq } = await import("drizzle-orm");
-      await db.update(users).set({ passwordHash: ownerPasswordHash, role: "owner" }).where(eq(users.email, "jonathan@lotlink.io"));
-      console.log("[Seed] Owner account password updated");
+      await db.update(users).set({ passwordHash: ownerPasswordHash, role: "owner", dealershipId: dealership!.id }).where(eq(users.email, "jonathan@lotlink.io"));
+      console.log("[Seed] Owner account updated");
     }
   } catch (error) {
     console.error("[Seed] Error seeding database:", error);
