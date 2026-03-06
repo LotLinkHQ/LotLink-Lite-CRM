@@ -52,9 +52,9 @@ export async function seedDatabase() {
       console.log("[Seed] Skipping owner seed (SEED_OWNER_PASSWORD not set)");
       return;
     }
+    const ownerPasswordHash = await bcrypt.hash(ownerPassword, 10);
     const existingOwner = await getUserByEmail("jonathan@lotlink.io");
     if (!existingOwner) {
-      const ownerPasswordHash = await bcrypt.hash(ownerPassword, 10);
       await createUser({
         email: "jonathan@lotlink.io",
         passwordHash: ownerPasswordHash,
@@ -64,7 +64,12 @@ export async function seedDatabase() {
       });
       console.log("[Seed] Owner account created");
     } else {
-      console.log("[Seed] Owner account already exists");
+      // Always update password to match env var
+      const db = getDb();
+      const { users } = await import("../shared/schema");
+      const { eq } = await import("drizzle-orm");
+      await db.update(users).set({ passwordHash: ownerPasswordHash, role: "owner" }).where(eq(users.email, "jonathan@lotlink.io"));
+      console.log("[Seed] Owner account password updated");
     }
   } catch (error) {
     console.error("[Seed] Error seeding database:", error);

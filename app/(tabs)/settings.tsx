@@ -67,7 +67,14 @@ export default function SettingsScreen() {
   }, [dealership?.websiteUrl, dealership?.branding]);
 
   const showError = (msg: string) => Platform.OS === "web" ? window.alert(msg) : Alert.alert("Error", msg);
-  const handleLogout = async () => { await logout(); router.replace("/login"); };
+  const handleLogout = async () => {
+    try { await logout(); } catch {}
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    } else {
+      router.replace("/login");
+    }
+  };
   const handleSync = () => {
     if (!dealership?.websiteUrl && !websiteUrl.trim()) { Alert.alert("No Website", "Please enter your dealership website URL first."); return; }
     if (websiteEdited && websiteUrl.trim()) {

@@ -24,6 +24,7 @@ const allowedOrigins = [
   "http://localhost:5000",
   "http://localhost:8081",
   "https://rv-sales-crm-api-production-0183.up.railway.app",
+  "https://lotlink-lite-crm-production.up.railway.app",
   "https://lotlink.app",
   "https://www.lotlink.app",
   "https://lotlink.org",
@@ -200,6 +201,15 @@ app.get("*", (req, res) => {
 const server = app.listen(PORT, async () => {
   console.log(`[Server] Production server running on port ${PORT}`);
 
+  // Fix missing columns before migrations run
+  try {
+    const database = getDb();
+    await database.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS alt_email VARCHAR(320)`);
+    console.log("[DB] Schema fix: alt_email column ensured");
+  } catch (e: any) {
+    console.warn("[DB] Schema fix warning:", e.message);
+  }
+
   // Run database migrations to create tables if they don't exist
   try {
     console.log("[DB] Running migrations...");
@@ -215,7 +225,7 @@ const server = app.listen(PORT, async () => {
     }
   } catch (error: any) {
     // Don't crash if tables already exist
-    if (error.message?.includes("already exists")) {
+    if (error.message?.includes("already exists") || error.message?.includes("invalid input value for enum")) {
       console.log("[DB] Tables already exist, skipping migrations");
     } else {
       console.error("[DB] Migration error:", error.message);

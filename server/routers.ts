@@ -195,8 +195,18 @@ export const appRouter = router({
       if (sessionToken) {
         await db.deleteUserSession(sessionToken);
       }
-      ctx.res.clearCookie("session", { path: "/" });
-      ctx.res.clearCookie("dealership_session", { path: "/" });
+      ctx.res.clearCookie("session", {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+      ctx.res.clearCookie("dealership_session", {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
       return { success: true };
     }),
 

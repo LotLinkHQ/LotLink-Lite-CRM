@@ -66,7 +66,9 @@ export function useDealershipAuth() {
     } catch (err) {
       console.error("[Auth] Logout failed:", err);
     }
-  }, [logoutMutation]);
+    // Force clear all query cache so stale auth data doesn't persist
+    utils.invalidate();
+  }, [logoutMutation, utils]);
 
   const isAuthenticated = useMemo(() => Boolean(me), [me]);
   const isLinkedToDealership = useMemo(() => Boolean(me?.dealershipId), [me]);
