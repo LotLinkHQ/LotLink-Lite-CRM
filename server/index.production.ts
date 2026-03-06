@@ -12,6 +12,7 @@ import { seedDatabase } from "./seed";
 import { startDailyDigest } from "./daily-digest";
 import { startInventorySyncScheduler } from "./inventory-scraper";
 import { createTablesIfNeeded } from "./create-tables";
+import { importPoulsboInventory } from "./import-poulsbo";
 import * as db from "./db";
 import { dealerships } from "../shared/schema";
 import { getDb } from "./db";
@@ -209,6 +210,17 @@ async function boot() {
 
   // Seed default data after tables are ready
   await seedDatabase();
+
+  // Import Poulsbo RV inventory if JSON exists and DB is empty
+  try {
+    const database = getDb();
+    const allDealerships = await database.select().from(dealerships).limit(1);
+    if (allDealerships[0]) {
+      await importPoulsboInventory(allDealerships[0].id);
+    }
+  } catch (e: any) {
+    console.warn("[Import] Inventory import warning:", e.message);
+  }
 
   const server = app.listen(PORT, () => {
     console.log(`[Server] Production server running on port ${PORT}`);
