@@ -5,13 +5,13 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import * as trpcExpress from "@trpc/server/adapters/express";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { sql } from "drizzle-orm";
 import { appRouter } from "./routers";
 import { createContext } from "./trpc";
 import { seedDatabase } from "./seed";
 import { startDailyDigest } from "./daily-digest";
 import { startInventorySyncScheduler } from "./inventory-scraper";
+import { createTablesIfNeeded } from "./create-tables";
 import * as db from "./db";
 import { dealerships } from "../shared/schema";
 import { getDb } from "./db";
@@ -201,36 +201,12 @@ app.get("*", (req, res) => {
 const server = app.listen(PORT, async () => {
   console.log(`[Server] Production server running on port ${PORT}`);
 
-  // Fix missing columns before migrations run
+  // Create or fix database tables
   try {
-    const database = getDb();
-    await database.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS alt_email VARCHAR(320)`);
-    console.log("[DB] Schema fix: alt_email column ensured");
-  } catch (e: any) {
-    console.warn("[DB] Schema fix warning:", e.message);
-  }
-
-  // Run database migrations to create tables if they don't exist
-  try {
-    console.log("[DB] Running migrations...");
-    const migrationsPath = path.join(__dirname, "../drizzle");
-    const fs = await import("fs");
-    if (fs.existsSync(migrationsPath)) {
-      const database = getDb();
-      await migrate(database, { migrationsFolder: migrationsPath });
-      console.log("[DB] Migrations complete");
-    } else {
-      console.warn("[DB] Migrations folder not found at:", migrationsPath);
-      console.warn("[DB] Skipping migrations — tables should already exist");
-    }
+    await createTablesIfNeeded();
   } catch (error: any) {
-    // Don't crash if tables already exist
-    if (error.message?.includes("already exists") || error.message?.includes("invalid input value for enum")) {
-      console.log("[DB] Tables already exist, skipping migrations");
-    } else {
-      console.error("[DB] Migration error:", error.message);
-      process.exit(1);
-    }
+    console.error("[DB] Table creation error:", error.message);
+    process.exit(1);
   }
 
   // Seed default data after tables are ready
