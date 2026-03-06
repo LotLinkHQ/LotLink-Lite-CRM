@@ -198,10 +198,8 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
-const server = app.listen(PORT, async () => {
-  console.log(`[Server] Production server running on port ${PORT}`);
-
-  // Create or fix database tables
+async function boot() {
+  // Create or fix database tables BEFORE accepting requests
   try {
     await createTablesIfNeeded();
   } catch (error: any) {
@@ -212,11 +210,17 @@ const server = app.listen(PORT, async () => {
   // Seed default data after tables are ready
   await seedDatabase();
 
-  // Start daily digest email scheduler
-  startDailyDigest();
+  const server = app.listen(PORT, () => {
+    console.log(`[Server] Production server running on port ${PORT}`);
 
-  // Start inventory sync scheduler (scrapes dealership websites every 24h)
-  startInventorySyncScheduler();
-});
+    // Start daily digest email scheduler
+    startDailyDigest();
+
+    // Start inventory sync scheduler (scrapes dealership websites every 24h)
+    startInventorySyncScheduler();
+  });
+}
+
+boot();
 
 export default app;
