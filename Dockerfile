@@ -20,7 +20,8 @@ COPY public ./public
 COPY drizzle ./drizzle
 COPY drizzle.config.ts ./
 COPY tsconfig.json ./
-COPY poulsbo-rv-inventory.json ./
+COPY poulsbo-inventory.json ./
+COPY parsed-leads.json ./
 
 # Copy built web frontend from stage 1
 COPY --from=web-builder /app/dist ./dist
