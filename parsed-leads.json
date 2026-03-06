@@ -1,0 +1,2270 @@
+[
+  {
+    "customerName": "SYDNEY MICHELLE",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "S875",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #S875. Imported 03/03/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-03-03"
+  },
+  {
+    "customerName": "Tim Coultrup",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Entourage",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "E5878",
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Stock #E5878. Imported 02/28/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-02-28"
+  },
+  {
+    "customerName": "Christopher Garcia",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Isata 3",
+    "preferredYear": 2018,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 02/23/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-02-23"
+  },
+  {
+    "customerName": "Josiah Swanson",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "S512B",
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Stock #S512B. Imported 02/23/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-02-23"
+  },
+  {
+    "customerName": "Stephen Nutt",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Conquest",
+    "preferredYear": 2021,
+    "preferences": {
+      "stockNumber": "S831A",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #S831A. Imported 02/22/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-02-22"
+  },
+  {
+    "customerName": "Shawn Cles",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 02/20/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-02-20"
+  },
+  {
+    "customerName": "Dale Hedden",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Entourage",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "S749",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #S749. Imported 02/15/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-02-15"
+  },
+  {
+    "customerName": "Michelle &",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "NORTHP",
+    "preferredYear": 2021,
+    "preferences": {
+      "stockNumber": "S958A",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #S958A. Imported 02/15/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-02-15"
+  },
+  {
+    "customerName": "jerry Pruitt",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Conquest",
+    "preferredYear": 2021,
+    "preferences": {
+      "stockNumber": "S831A",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #S831A. Imported 02/14/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-02-14"
+  },
+  {
+    "customerName": "CHAILA MARSHALL",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Sunseeker",
+    "preferredYear": 2026,
+    "preferences": {
+      "stockNumber": "S963",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #S963. Imported 02/09/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-02-09"
+  },
+  {
+    "customerName": "Doug Kintzler",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Entourage",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "E5572B",
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Stock #E5572B. Imported 02/03/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-02-03"
+  },
+  {
+    "customerName": "ELIZABETH MYERS",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 02/01/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-02-01"
+  },
+  {
+    "customerName": "Juan Herman",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "TIMBER",
+    "preferredYear": 2015,
+    "preferences": {
+      "stockNumber": "S669A",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #S669A. Imported 01/20/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-01-20"
+  },
+  {
+    "customerName": "Dennis Christianson",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Entourage",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "E5572B",
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Stock #E5572B. Imported 01/19/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-01-19"
+  },
+  {
+    "customerName": "JOLEENA BERGLUND",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "RAINIER",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 01/17/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-01-17"
+  },
+  {
+    "customerName": "Rockford Gudim",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "M3442A",
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Stock #M3442A. Imported 01/09/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-01-09"
+  },
+  {
+    "customerName": "Nancy Zak",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "SCOPE",
+    "preferredYear": 2026,
+    "preferences": {
+      "stockNumber": "S833",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #S833. Imported 01/07/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-01-07"
+  },
+  {
+    "customerName": "Kimberly Klaus",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "A.C.E.",
+    "preferredYear": 2013,
+    "preferences": {
+      "stockNumber": "BC4191B",
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Stock #BC4191B. Imported 01/05/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-01-05"
+  },
+  {
+    "customerName": "Igor Mamedalin",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Cross Trail",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "K6075",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #K6075. Imported 01/03/26.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2026-01-03"
+  },
+  {
+    "customerName": "Delbert Reed",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "M3465",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #M3465. Imported 12/27/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-12-27"
+  },
+  {
+    "customerName": "Deanna Taylor",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Imported 12/26/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-12-26"
+  },
+  {
+    "customerName": "James Blevins",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Europa",
+    "preferredYear": 2026,
+    "preferences": {
+      "stockNumber": "S857",
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Stock #S857. Imported 12/15/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-12-15"
+  },
+  {
+    "customerName": "Noah Simone",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "S721",
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Stock #S721. Imported 12/15/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-12-15"
+  },
+  {
+    "customerName": "Darryl Keffer",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Carbon",
+    "preferredYear": 2023,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 12/09/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-12-09"
+  },
+  {
+    "customerName": "Widick",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Cedar",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "S723A",
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Stock #S723A. Imported 12/07/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-12-07"
+  },
+  {
+    "customerName": "Kenneth Windsor",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "M3714",
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Stock #M3714. Imported 12/07/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-12-07"
+  },
+  {
+    "customerName": "Randal O'Toole",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Over 2",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 12/07/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-12-07"
+  },
+  {
+    "customerName": "michelle lawton",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Wayfarer",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "S628",
+      "source": "PoulsboRV.com",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Contact: walk-in. Stock #S628. Imported 11/25/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-11-25"
+  },
+  {
+    "customerName": "Tania Thomas",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "WILDCAT",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "S730",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #S730. Imported 11/11/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-11-11"
+  },
+  {
+    "customerName": "Roosevelt Howard",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Imported 11/09/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-11-09"
+  },
+  {
+    "customerName": "Paul Curnett",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Allegro",
+    "preferredYear": 2017,
+    "preferences": {
+      "stockNumber": "M3442A",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #M3442A. Imported 11/06/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-11-06"
+  },
+  {
+    "customerName": "david marsh",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Facebook",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Facebook. Contact: walk-in. Imported 11/04/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-11-04"
+  },
+  {
+    "customerName": "Jerry Clark",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Phaeton",
+    "preferredYear": 2009,
+    "preferences": {
+      "stockNumber": null,
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Imported 11/03/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-11-03"
+  },
+  {
+    "customerName": "John Thor",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Allegro",
+    "preferredYear": 2017,
+    "preferences": {
+      "stockNumber": null,
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Imported 11/01/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-11-01"
+  },
+  {
+    "customerName": "Ashlyn Wishard",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Shadow",
+    "preferredYear": 2017,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 10/29/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-10-29"
+  },
+  {
+    "customerName": "Anthony Duenas",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "BC5201",
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Stock #BC5201. Imported 10/15/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-10-15"
+  },
+  {
+    "customerName": "Harlan McGowan",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Wayfarer",
+    "preferredYear": 2020,
+    "preferences": {
+      "stockNumber": null,
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Imported 10/09/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-10-09"
+  },
+  {
+    "customerName": "SUSAN JOHNSON",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "ACE 30.1",
+    "preferredYear": 2013,
+    "preferences": {
+      "stockNumber": "BC4191B",
+      "source": "Referral",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Referral. Contact: walk-in. Stock #BC4191B. Imported 10/07/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-10-07"
+  },
+  {
+    "customerName": "Dave Castro",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Isata 5",
+    "preferredYear": 2024,
+    "preferences": {
+      "stockNumber": "M3367",
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Stock #M3367. Imported 10/02/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-10-02"
+  },
+  {
+    "customerName": "Steve Semler",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "ALLEGRO",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "M3455",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #M3455. Imported 09/23/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-09-23"
+  },
+  {
+    "customerName": "Joe Michaud",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Mirada",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "S671",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #S671. Imported 09/13/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-09-13"
+  },
+  {
+    "customerName": "Jeff Davidson",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Allegro",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "M3455",
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Stock #M3455. Imported 09/07/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-09-07"
+  },
+  {
+    "customerName": "Yevette Smith",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Isata 5",
+    "preferredYear": 2024,
+    "preferences": {
+      "stockNumber": "M3367",
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Stock #M3367. Imported 09/02/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-09-02"
+  },
+  {
+    "customerName": "MICHAEL COLLINS",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 08/30/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-08-30"
+  },
+  {
+    "customerName": "ANGELA &",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 08/24/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-08-24"
+  },
+  {
+    "customerName": "Sheri Cook",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "S812",
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Stock #S812. Imported 08/11/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-08-11"
+  },
+  {
+    "customerName": "Jeff Scholzen",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 08/09/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-08-09"
+  },
+  {
+    "customerName": "Monique Brunson",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "F1280",
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Stock #F1280. Imported 08/05/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-08-05"
+  },
+  {
+    "customerName": "Adam Riojas",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "M3233",
+      "source": "Facebook",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Facebook. Contact: walk-in. Stock #M3233. Imported 08/04/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-08-04"
+  },
+  {
+    "customerName": "Ridge Taylor",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Allegro",
+    "preferredYear": 2026,
+    "preferences": {
+      "stockNumber": "S853",
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Stock #S853. Imported 07/28/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-07-28"
+  },
+  {
+    "customerName": "Tania Bermeo",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Interstate",
+    "preferredYear": 2015,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 07/25/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-07-25"
+  },
+  {
+    "customerName": "Diamond Holdings Llc",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "S485",
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Stock #S485. Imported 07/25/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-07-25"
+  },
+  {
+    "customerName": "Kevin McNair",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Mirada",
+    "preferredYear": 2023,
+    "preferences": {
+      "stockNumber": "E5601",
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Stock #E5601. Imported 07/22/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-07-22"
+  },
+  {
+    "customerName": "Jared Harman",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Fuzion",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "S680",
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Stock #S680. Imported 07/14/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-07-14"
+  },
+  {
+    "customerName": "Vincent Dimmick",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Over 2",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 07/12/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-07-12"
+  },
+  {
+    "customerName": "Tina Gingrich",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Horizon",
+    "preferredYear": 2007,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 07/11/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-07-11"
+  },
+  {
+    "customerName": "JAN HOBUS",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 06/28/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-06-28"
+  },
+  {
+    "customerName": "Linde Besamat",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "K5804",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #K5804. Imported 06/24/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-06-24"
+  },
+  {
+    "customerName": "Tyler Sargent",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 06/24/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-06-24"
+  },
+  {
+    "customerName": "Steve Klaasse",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "K5830",
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Stock #K5830. Imported 06/24/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-06-24"
+  },
+  {
+    "customerName": "Duane Robinson",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Over 2",
+    "preferredYear": 2022,
+    "preferences": {
+      "stockNumber": "K5715",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #K5715. Imported 06/15/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-06-15"
+  },
+  {
+    "customerName": "Paully Sholter",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Ventana",
+    "preferredYear": 2010,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 06/14/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-06-14"
+  },
+  {
+    "customerName": "Dave Clark",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Allegro",
+    "preferredYear": 2017,
+    "preferences": {
+      "stockNumber": "BC5105",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #BC5105. Imported 05/27/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-05-27"
+  },
+  {
+    "customerName": "Carlos Olivera Diaz",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 05/24/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-05-24"
+  },
+  {
+    "customerName": "RUSTY",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Referral",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Referral. Contact: walk-in. Imported 05/20/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-05-20"
+  },
+  {
+    "customerName": "LEO HOOVER",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "SUNSET",
+    "preferredYear": 2024,
+    "preferences": {
+      "stockNumber": "S588",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #S588. Imported 05/18/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-05-18"
+  },
+  {
+    "customerName": "LEANN &",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "ZINGER",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "S754",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #S754. Imported 05/17/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-05-17"
+  },
+  {
+    "customerName": "Corey Ellison",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 05/17/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-05-17"
+  },
+  {
+    "customerName": "GLORIA PHILLIPS",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "S637",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #S637. Imported 05/14/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-05-14"
+  },
+  {
+    "customerName": "clark jelley",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "ELIPSE 24",
+    "preferredYear": 2011,
+    "preferences": {
+      "stockNumber": null,
+      "source": "RV Show",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RV Show. Contact: walk-in. Imported 05/06/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-05-06"
+  },
+  {
+    "customerName": "Pat & Pam",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "ALLEGRO",
+    "preferredYear": 2020,
+    "preferences": {
+      "stockNumber": "BC5171",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #BC5171. Imported 04/27/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-04-27"
+  },
+  {
+    "customerName": "rob isenberg",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Allegro",
+    "preferredYear": 2017,
+    "preferences": {
+      "stockNumber": "BC5105",
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Stock #BC5105. Imported 04/27/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-04-27"
+  },
+  {
+    "customerName": "Jeff Kennedy",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 04/21/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-04-21"
+  },
+  {
+    "customerName": "Michael Smith",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Mirada",
+    "preferredYear": 2020,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 04/21/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-04-21"
+  },
+  {
+    "customerName": "Adam Thompson",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 04/14/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-04-14"
+  },
+  {
+    "customerName": "bonnie murphy",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 04/13/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-04-13"
+  },
+  {
+    "customerName": "larry fassold",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "K5804",
+      "source": "RVUSA.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVUSA.com. Stock #K5804. Imported 04/12/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-04-12"
+  },
+  {
+    "customerName": "Corey Chavez",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "FR3 34DS",
+    "preferredYear": 2024,
+    "preferences": {
+      "stockNumber": "K6044A",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #K6044A. Imported 04/08/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-04-08"
+  },
+  {
+    "customerName": "Tim Perez",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Freelander",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "F1276",
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Stock #F1276. Imported 04/06/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-04-06"
+  },
+  {
+    "customerName": "Sharon osby",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 04/01/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-04-01"
+  },
+  {
+    "customerName": "CUPEN GARCIA",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "ENTRADA",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "S768",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #S768. Imported 04/01/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-04-01"
+  },
+  {
+    "customerName": "Diane Lair",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "PHAETON",
+    "preferredYear": 2015,
+    "preferences": {
+      "stockNumber": null,
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Imported 03/30/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-03-30"
+  },
+  {
+    "customerName": "Ernesto Aguiluz",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 03/27/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-03-27"
+  },
+  {
+    "customerName": "Shelia Trapp",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "WILDCAT",
+    "preferredYear": 2023,
+    "preferences": {
+      "stockNumber": "S461",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #S461. Imported 03/25/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-03-25"
+  },
+  {
+    "customerName": "Abbigail Wardstrom",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Cherokee",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": null,
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Imported 03/24/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-03-24"
+  },
+  {
+    "customerName": "Richard Farrington",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 03/18/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-03-18"
+  },
+  {
+    "customerName": "Jack andIda",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "ALLEGRO",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "S712",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #S712. Imported 03/17/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-03-17"
+  },
+  {
+    "customerName": "Jessica Lee",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "K6006A",
+      "source": "RVT.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVT.com. Stock #K6006A. Imported 03/08/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-03-08"
+  },
+  {
+    "customerName": "Jeff Campbell",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Allegro",
+    "preferredYear": 2022,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 03/06/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-03-06"
+  },
+  {
+    "customerName": "David Larson",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Over 2",
+    "preferredYear": 2023,
+    "preferences": {
+      "stockNumber": "K5830",
+      "source": "RVUSA.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVUSA.com. Stock #K5830. Imported 03/05/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-03-05"
+  },
+  {
+    "customerName": "PAULETTE LOVE",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "SABRE",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "S669",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #S669. Imported 03/04/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-03-04"
+  },
+  {
+    "customerName": "Marcie Senger",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "F1280",
+      "source": "RVUSA.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVUSA.com. Stock #F1280. Imported 02/28/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-02-28"
+  },
+  {
+    "customerName": "Scott Drake",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "VIEW",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 02/25/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-02-25"
+  },
+  {
+    "customerName": "Thomas Dye",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Classic",
+    "preferredYear": 2012,
+    "preferences": {
+      "stockNumber": "BC4931",
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Stock #BC4931. Imported 02/24/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-02-24"
+  },
+  {
+    "customerName": "Jim Watterson",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 02/24/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-02-24"
+  },
+  {
+    "customerName": "Matthew K",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Imported 02/24/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-02-24"
+  },
+  {
+    "customerName": "Jack Hudson",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 02/24/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-02-24"
+  },
+  {
+    "customerName": "Edward Cowden",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Open",
+    "preferredYear": 2021,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 02/23/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-02-23"
+  },
+  {
+    "customerName": "Kimberly Ross",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Classic",
+    "preferredYear": 2012,
+    "preferences": {
+      "stockNumber": "BC4931",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #BC4931. Imported 02/23/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-02-23"
+  },
+  {
+    "customerName": "Dakota Fields",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Flair",
+    "preferredYear": 2024,
+    "preferences": {
+      "stockNumber": "S519",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #S519. Imported 02/17/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-02-17"
+  },
+  {
+    "customerName": "vernie reed",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Vegas",
+    "preferredYear": 2014,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 02/17/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-02-17"
+  },
+  {
+    "customerName": "Sean Kelly",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Cascade",
+    "preferredYear": 2021,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 02/16/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-02-16"
+  },
+  {
+    "customerName": "Winston Bontrager",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Raptor",
+    "preferredYear": 2020,
+    "preferences": {
+      "stockNumber": "E5596A",
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Stock #E5596A. Imported 02/16/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-02-16"
+  },
+  {
+    "customerName": "Andy and",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "S679",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #S679. Imported 02/15/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-02-15"
+  },
+  {
+    "customerName": "Larry Spencer",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Tour 40FD",
+    "preferredYear": 2008,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 02/03/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-02-03"
+  },
+  {
+    "customerName": "Orlantha Coleman",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Quantum",
+    "preferredYear": 2017,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 02/02/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-02-02"
+  },
+  {
+    "customerName": "Allan Gourlie",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 01/27/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-27"
+  },
+  {
+    "customerName": "Kurt Koesel",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "PoulsboRV.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: PoulsboRV.com. Imported 01/26/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-26"
+  },
+  {
+    "customerName": "Tom Maier",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Solera",
+    "preferredYear": 2013,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 01/26/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-26"
+  },
+  {
+    "customerName": "Luke Wahl",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Force",
+    "preferredYear": 2016,
+    "preferences": {
+      "stockNumber": null,
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Imported 01/25/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-25"
+  },
+  {
+    "customerName": "MICHAEL &",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 01/23/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-23"
+  },
+  {
+    "customerName": "William Watt",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 01/21/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-21"
+  },
+  {
+    "customerName": "Steve Roos",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Force",
+    "preferredYear": 2016,
+    "preferences": {
+      "stockNumber": null,
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Imported 01/20/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-20"
+  },
+  {
+    "customerName": "Tom and",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Wayfarer",
+    "preferredYear": 2025,
+    "preferences": {
+      "stockNumber": "S628",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #S628. Imported 01/13/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-13"
+  },
+  {
+    "customerName": "Jon Brennan",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 01/12/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-12"
+  },
+  {
+    "customerName": "Steven tilford",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 01/12/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-12"
+  },
+  {
+    "customerName": "Michael Wallace",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "ALLEGRO",
+    "preferredYear": 2023,
+    "preferences": {
+      "stockNumber": "K5707",
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Stock #K5707. Imported 01/12/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-12"
+  },
+  {
+    "customerName": "Bryant Vangsness",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Force",
+    "preferredYear": 2016,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 01/11/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-11"
+  },
+  {
+    "customerName": "Guy",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": "M3528",
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Stock #M3528. Imported 01/10/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-10"
+  },
+  {
+    "customerName": "Dan Calvin",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 01/09/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-09"
+  },
+  {
+    "customerName": "Brandee Jacobson",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 01/09/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-09"
+  },
+  {
+    "customerName": "Jon M",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Force",
+    "preferredYear": 2016,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 01/09/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-09"
+  },
+  {
+    "customerName": "GERALD WOLL",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Walk-in",
+      "contactType": "walk-in",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Walk-in. Contact: walk-in. Imported 01/08/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-08"
+  },
+  {
+    "customerName": "Jeepy Ostrea",
+    "customerPhone": null,
+    "preferenceType": "features",
+    "preferredModel": null,
+    "preferredYear": null,
+    "preferences": {
+      "stockNumber": null,
+      "source": "Rollick Outdoor",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: Rollick Outdoor. Imported 01/03/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-03"
+  },
+  {
+    "customerName": "Jerry Woll",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "ALLEGRO",
+    "preferredYear": 2023,
+    "preferences": {
+      "stockNumber": "K5707",
+      "source": "RVTrader",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVTrader. Stock #K5707. Imported 01/03/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-03"
+  },
+  {
+    "customerName": "EDWARD FALLON",
+    "customerPhone": null,
+    "preferenceType": "model",
+    "preferredModel": "Allegro",
+    "preferredYear": 2011,
+    "preferences": {
+      "stockNumber": null,
+      "source": "RVUSA.com",
+      "contactType": "internet",
+      "importedFrom": "DealerSocket"
+    },
+    "notes": "Source: RVUSA.com. Imported 01/02/25.",
+    "status": "active",
+    "storeLocation": "Sumner",
+    "salespersonName": "Jonathan Kitchel",
+    "createdAt": "2025-01-02"
+  }
+]

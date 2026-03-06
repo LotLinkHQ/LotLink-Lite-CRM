@@ -13,6 +13,7 @@ import { startDailyDigest } from "./daily-digest";
 import { startInventorySyncScheduler } from "./inventory-scraper";
 import { createTablesIfNeeded } from "./create-tables";
 import { importPoulsboInventory } from "./import-poulsbo";
+import { importLeadsFromJSON } from "./import-leads";
 import * as db from "./db";
 import { dealerships } from "../shared/schema";
 import { getDb } from "./db";
@@ -217,9 +218,10 @@ async function boot() {
     const allDealerships = await database.select().from(dealerships).limit(1);
     if (allDealerships[0]) {
       await importPoulsboInventory(allDealerships[0].id);
+      await importLeadsFromJSON(allDealerships[0].id);
     }
   } catch (e: any) {
-    console.warn("[Import] Inventory import warning:", e.message);
+    console.warn("[Import] Import warning:", e.message);
   }
 
   const server = app.listen(PORT, () => {
