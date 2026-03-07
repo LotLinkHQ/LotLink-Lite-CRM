@@ -42,7 +42,7 @@ function scoreLeadAgainstUnit(lead: any, unit: any): MatchResult {
   const unitFull = `${unitMake} ${unitModel}`;
   const prefs = lead.preferences as any;
 
-  // ── RV Type / Model Match (up to 30pts) ──
+  // ── Model Name Match (up to 40pts) ──
   if (leadModel && unitModel) {
     const leadWords = leadModel.split(/\s+/).filter(Boolean);
     const unitWords = unitFull.split(/\s+/).filter(Boolean);
@@ -58,50 +58,56 @@ function scoreLeadAgainstUnit(lead: any, unit: any): MatchResult {
     }
 
     if (leadModel === unitModel || leadModel === unitFull) {
-      score += 30;
-      reasons.push(`Exact type match: ${unit.make} ${unit.model}`);
+      score += 40;
+      reasons.push(`Exact model match: ${unit.make} ${unit.model}`);
     } else if (wordMatches > 0) {
       const matchRatio = wordMatches / leadWords.length;
       if (matchRatio >= 0.6) {
-        score += 30;
-        reasons.push(`Strong type match: "${lead.preferredModel}" ≈ "${unit.make} ${unit.model}"`);
+        score += 40;
+        reasons.push(`Strong model match: "${lead.preferredModel}" ≈ "${unit.make} ${unit.model}"`);
       } else {
-        // Check category match
-        const leadCat = getRvCategory(leadModel);
-        const unitCat = getRvCategory(unitFull);
-        if (leadCat && unitCat && leadCat === unitCat) {
-          score += 15;
-          reasons.push(`Same RV category (${leadCat})`);
-        } else if (wordMatches > 0) {
-          score += 15;
-          reasons.push(`Partial type overlap: "${lead.preferredModel}" ~ "${unit.make} ${unit.model}"`);
-        }
-      }
-    } else {
-      const leadCat = getRvCategory(leadModel);
-      const unitCat = getRvCategory(unitFull);
-      if (leadCat && unitCat && leadCat === unitCat) {
-        score += 15;
-        reasons.push(`Same RV category (${leadCat})`);
+        score += 20;
+        reasons.push(`Partial model match: "${lead.preferredModel}" ~ "${unit.make} ${unit.model}"`);
       }
     }
   }
 
-  // ── Budget Fit (up to 25pts) ──
-  if (prefs && typeof prefs === "object" && unit.price) {
-    const unitPrice = parseFloat(unit.price);
-    const minPrice = prefs.minPrice ? parseFloat(prefs.minPrice) : 0;
-    const maxPrice = prefs.maxPrice ? parseFloat(prefs.maxPrice) : 0;
+  // ── RV Type/Class Match (up to 15pts) ── separate from model
+  if (leadModel) {
+    const leadCat = getRvCategory(leadModel);
+    const unitCat = getRvCategory(unitFull);
+    if (leadCat && unitCat && leadCat === unitCat) {
+      score += 15;
+      reasons.push(`Same RV class: ${leadCat}`);
+    }
+  }
 
-    if (!isNaN(unitPrice) && maxPrice > 0) {
-      if (unitPrice >= minPrice && unitPrice <= maxPrice) {
-        score += 25;
-        reasons.push(`Within budget: $${unitPrice.toLocaleString()} fits $${minPrice ? minPrice.toLocaleString() + '–' : ''}$${maxPrice.toLocaleString()}`);
-      } else if (unitPrice <= maxPrice * 1.1) {
-        score += 15;
-        reasons.push(`Near budget: $${unitPrice.toLocaleString()} (budget up to $${maxPrice.toLocaleString()})`);
+  // ── Same Make (up to 10pts) ──
+  if (leadModel && unitMake) {
+    const leadLower = leadModel.toLowerCase();
+    if (leadLower.includes(unitMake) || unitMake.includes(leadLower.split(/\s+/)[0])) {
+      score += 10;
+      reasons.push(`Same manufacturer: ${unit.make}`);
+    }
+  }
+
+  // ── Budget Fit (up to 15pts) ──
+  if (prefs && typeof prefs === "object") {
+    const maxPrice = prefs.maxPrice ? parseFloat(prefs.maxPrice) : 0;
+    if (maxPrice > 0 && unit.price) {
+      const unitPrice = parseFloat(unit.price);
+      const minPrice = prefs.minPrice ? parseFloat(prefs.minPrice) : 0;
+      if (!isNaN(unitPrice)) {
+        if (unitPrice >= minPrice && unitPrice <= maxPrice) {
+          score += 15;
+          reasons.push(`Within budget: $${unitPrice.toLocaleString()} fits $${minPrice ? minPrice.toLocaleString() + '–' : ''}$${maxPrice.toLocaleString()}`);
+        } else if (unitPrice <= maxPrice * 1.15) {
+          score += 8;
+          reasons.push(`Near budget: $${unitPrice.toLocaleString()} (budget up to $${maxPrice.toLocaleString()})`);
+        }
       }
     }
+    // Don't penalize units with no price — skip scoring instead
   }
 
   // ── Year Range Match (up to 20pts) ──
@@ -110,12 +116,15 @@ function scoreLeadAgainstUnit(lead: any, unit: any): MatchResult {
     if (yearDiff === 0) {
       score += 20;
       reasons.push(`Exact year match: ${unit.year}`);
-    } else if (yearDiff <= 1) {
-      score += 15;
+    } else if (yearDiff === 1) {
+      score += 12;
       reasons.push(`Close year: wanted ${lead.preferredYear}, unit is ${unit.year}`);
-    } else if (yearDiff <= 3) {
+    } else if (yearDiff === 2) {
       score += 8;
-      reasons.push(`Year within range: wanted ${lead.preferredYear}, unit is ${unit.year}`);
+      reasons.push(`Year within 2: wanted ${lead.preferredYear}, unit is ${unit.year}`);
+    } else if (yearDiff === 3) {
+      score += 4;
+      reasons.push(`Year within 3: wanted ${lead.preferredYear}, unit is ${unit.year}`);
     }
   }
 
@@ -173,11 +182,14 @@ function scoreLeadAgainstUnit(lead: any, unit: any): MatchResult {
   }
   score += Math.min(featurePoints, 15);
 
-  // ── Make/Model Preference (up to 10pts) ──
+  // ── Preferred Make from preferences (up to 10pts, if not already matched above) ──
   if (prefs && prefs.make && unit.make) {
     if (normalizeString(prefs.make) === normalizeString(unit.make)) {
-      score += 10;
-      reasons.push(`Preferred make: ${unit.make}`);
+      // Only add if we didn't already score make in the model section
+      if (!reasons.some(r => r.includes("manufacturer"))) {
+        score += 10;
+        reasons.push(`Preferred make: ${unit.make}`);
+      }
     }
   }
 
@@ -194,8 +206,11 @@ function scoreLeadAgainstUnit(lead: any, unit: any): MatchResult {
     }
   }
 
-  // Cap at 100
+  // Cap at 100, minimum threshold at 25
   score = Math.min(score, 100);
+  if (score < 25) {
+    return { leadId: lead.id, score: 0, reasons: [], explanation: "" };
+  }
 
   // ── Human-readable explanation ──
   const explanation = buildExplanation(lead, unit, score, reasons);

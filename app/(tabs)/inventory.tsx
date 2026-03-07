@@ -287,9 +287,13 @@ export default function InventoryScreen() {
               <View style={s.unitMeta}>
                 {item.length && <Text style={s.metaChip}>{item.length}ft</Text>}
                 {item.bedType && <Text style={s.metaChip}>{item.bedType}</Text>}
-                {item.price && (
+                {item.price ? (
                   <Text style={[s.metaChip, { color: C.green, fontWeight: "700" }]}>
                     ${Number(item.price).toLocaleString()}
+                  </Text>
+                ) : (
+                  <Text style={[s.metaChip, { color: C.amber, fontWeight: "700" }]}>
+                    Price TBD
                   </Text>
                 )}
               </View>

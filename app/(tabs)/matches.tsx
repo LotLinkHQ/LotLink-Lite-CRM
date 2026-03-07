@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   View, Text, FlatList, TouchableOpacity, ActivityIndicator,
-  Modal, ScrollView, TextInput, Platform, Alert, StyleSheet,
+  Modal, ScrollView, TextInput, Platform, Alert, StyleSheet, Linking,
 } from "react-native";
 import { router as navRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
@@ -275,14 +275,39 @@ export default function MatchesScreen() {
                       </View>
                       <Text style={s.customerName}>{lead.customerName}</Text>
                       <View style={{ marginTop: 8, gap: 5 }}>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                          <Ionicons name="call-outline" size={15} color={C.teal} />
-                          <Text style={s.contactText}>{lead.customerPhone || "No phone"}</Text>
-                        </View>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                          <Ionicons name="mail-outline" size={15} color={C.teal} />
-                          <Text style={s.contactText}>{lead.customerEmail || "No email"}</Text>
-                        </View>
+                        {lead.customerPhone ? (
+                          <TouchableOpacity
+                            onPress={() => Linking.openURL(`tel:${lead.customerPhone}`)}
+                            style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: C.greenLite, borderRadius: 6, paddingVertical: 6, paddingHorizontal: 10 }}
+                          >
+                            <Ionicons name="call" size={15} color={C.green} />
+                            <Text style={[s.contactText, { color: C.green }]}>{lead.customerPhone}</Text>
+                          </TouchableOpacity>
+                        ) : (
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                            <Ionicons name="call-outline" size={15} color={C.amber} />
+                            <Text style={[s.contactText, { color: C.amber }]}>No phone</Text>
+                          </View>
+                        )}
+                        {lead.customerEmail ? (
+                          <TouchableOpacity
+                            onPress={() => Linking.openURL(`mailto:${lead.customerEmail}`)}
+                            style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#0c2525", borderRadius: 6, paddingVertical: 6, paddingHorizontal: 10 }}
+                          >
+                            <Ionicons name="mail" size={15} color={C.teal} />
+                            <Text style={[s.contactText, { color: C.teal }]}>{lead.customerEmail}</Text>
+                          </TouchableOpacity>
+                        ) : (
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                            <Ionicons name="mail-outline" size={15} color={C.amber} />
+                            <Text style={[s.contactText, { color: C.amber }]}>No email</Text>
+                          </View>
+                        )}
+                        {!lead.customerPhone && !lead.customerEmail && (
+                          <View style={{ backgroundColor: "#332800", borderRadius: 6, padding: 8, marginTop: 4 }}>
+                            <Text style={{ color: C.amber, fontSize: 12, fontWeight: "600" }}>⚠ Missing contact info</Text>
+                          </View>
+                        )}
                       </View>
                     </View>
 

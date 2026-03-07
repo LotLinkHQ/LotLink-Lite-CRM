@@ -73,7 +73,7 @@ export function useDealershipAuth() {
   const isAuthenticated = useMemo(() => Boolean(me), [me]);
   const isLinkedToDealership = useMemo(() => Boolean(me?.dealershipId), [me]);
   const isAdmin = useMemo(() => me?.role === "admin" || me?.role === "owner", [me]);
-  const isManager = useMemo(() => me?.role === "manager" || me?.role === "admin", [me]);
+  const isManager = useMemo(() => me?.role === "manager" || me?.role === "admin" || me?.role === "owner", [me]);
   const isOwner = useMemo(() => me?.role === "owner", [me]);
 
   return {

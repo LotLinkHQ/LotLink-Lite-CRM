@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, FlatList,
   ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet,
@@ -6,6 +6,59 @@ import {
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { C } from "@/constants/theme";
+
+// Simple markdown renderer for AI messages
+function renderMarkdown(text: string) {
+  return text.split("\n").map((line, i) => {
+    // Headers
+    if (line.startsWith("### ")) return <Text key={i} style={{ fontWeight: "700", fontSize: 15, color: C.teal, marginTop: 6, marginBottom: 2 }}>{processInline(line.slice(4))}</Text>;
+    if (line.startsWith("## ")) return <Text key={i} style={{ fontWeight: "700", fontSize: 16, color: C.teal, marginTop: 8, marginBottom: 2 }}>{processInline(line.slice(3))}</Text>;
+    if (line.startsWith("# ")) return <Text key={i} style={{ fontWeight: "700", fontSize: 18, color: C.teal, marginTop: 8, marginBottom: 2 }}>{processInline(line.slice(2))}</Text>;
+    // Bullets
+    if (line.startsWith("- ") || line.startsWith("* ")) return <Text key={i} style={{ color: C.ink, lineHeight: 20 }}>  • {processInline(line.slice(2))}</Text>;
+    // Numbered lists
+    const numMatch = line.match(/^(\d+)\.\s/);
+    if (numMatch) return <Text key={i} style={{ color: C.ink, lineHeight: 20 }}>  {numMatch[1]}. {processInline(line.slice(numMatch[0].length))}</Text>;
+    // Empty line
+    if (!line.trim()) return <Text key={i} style={{ height: 6 }}>{""}</Text>;
+    // Regular line
+    return <Text key={i} style={{ color: C.ink, lineHeight: 20 }}>{processInline(line)}</Text>;
+  });
+}
+
+function processInline(text: string): React.ReactNode {
+  // Handle **bold**, *italic*, `code`
+  const parts: React.ReactNode[] = [];
+  let remaining = text;
+  let key = 0;
+  while (remaining.length > 0) {
+    // Bold
+    const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
+    // Code
+    const codeMatch = remaining.match(/`(.+?)`/);
+    // Italic
+    const italicMatch = remaining.match(/(?<!\*)\*([^*]+?)\*(?!\*)/);
+
+    // Find earliest match
+    let earliest: { type: string; match: RegExpMatchArray; idx: number } | null = null;
+    if (boldMatch && boldMatch.index !== undefined) earliest = { type: "bold", match: boldMatch, idx: boldMatch.index };
+    if (codeMatch && codeMatch.index !== undefined && (!earliest || codeMatch.index < earliest.idx)) earliest = { type: "code", match: codeMatch, idx: codeMatch.index };
+    if (italicMatch && italicMatch.index !== undefined && (!earliest || italicMatch.index < earliest.idx)) earliest = { type: "italic", match: italicMatch, idx: italicMatch.index };
+
+    if (!earliest) {
+      parts.push(remaining);
+      break;
+    }
+
+    if (earliest.idx > 0) parts.push(remaining.slice(0, earliest.idx));
+    if (earliest.type === "bold") parts.push(<Text key={key++} style={{ fontWeight: "700", color: C.teal }}>{earliest.match[1]}</Text>);
+    else if (earliest.type === "code") parts.push(<Text key={key++} style={{ fontFamily: Platform.OS === "web" ? "monospace" : undefined, backgroundColor: "#0a1a1a", paddingHorizontal: 4, borderRadius: 3, color: C.mint }}>{earliest.match[1]}</Text>);
+    else if (earliest.type === "italic") parts.push(<Text key={key++} style={{ fontStyle: "italic" }}>{earliest.match[1]}</Text>);
+
+    remaining = remaining.slice(earliest.idx + earliest.match[0].length);
+  }
+  return parts.length === 1 && typeof parts[0] === "string" ? parts[0] : <>{parts}</>;
+}
 
 interface Message {
   id: string;
@@ -56,7 +109,11 @@ export default function AssistantScreen() {
     return (
       <View style={[s.msgWrap, { alignSelf: isUser ? "flex-end" : "flex-start" }]}>
         <View style={[s.msgBubble, isUser ? s.msgUser : s.msgAI]}>
-          <Text style={[s.msgText, { color: isUser ? C.white : C.ink }]}>{item.content}</Text>
+          {isUser ? (
+            <Text style={[s.msgText, { color: C.white }]}>{item.content}</Text>
+          ) : (
+            <View>{renderMarkdown(item.content)}</View>
+          )}
         </View>
       </View>
     );

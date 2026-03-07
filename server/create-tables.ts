@@ -212,7 +212,8 @@ export async function createTablesIfNeeded() {
       dismiss_reason VARCHAR(255),
       last_matched_price DECIMAL(10,2),
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      UNIQUE(lead_id, inventory_id)
     )
   `));
 

@@ -7,10 +7,10 @@ import { useState, useEffect } from "react";
 import { C } from "@/constants/theme";
 
 const ROLE_LABELS: Record<string, string> = {
-  admin: "Admin", manager: "Manager", salesperson: "Salesperson",
+  owner: "Owner", admin: "Admin", manager: "Manager", salesperson: "Salesperson",
 };
 const ROLE_COLORS: Record<string, string> = {
-  admin: C.red, manager: C.amber, salesperson: C.teal,
+  owner: "#9c27b0", admin: C.red, manager: C.amber, salesperson: C.teal,
 };
 
 export default function SettingsScreen() {

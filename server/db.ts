@@ -93,13 +93,17 @@ function loadInventoryFromJson() {
   }));
 }
 
-export async function getUserLeads(dealershipId: number, cursor?: number, limit: number = 50, userId?: number) {
+export async function getUserLeads(dealershipId: number, cursor?: number, limit: number = 50, userId?: number, status?: string) {
   if (_useJsonFallback) return [];
   const db = getDb();
   const conditions = [eq(leads.dealershipId, dealershipId)];
 
   if (userId !== undefined) {
     conditions.push(eq(leads.userId, userId));
+  }
+
+  if (status) {
+    conditions.push(eq(leads.status, status as any));
   }
 
   if (cursor) {
@@ -213,8 +217,29 @@ export async function getMatchesByLeadId(leadId: number) {
   if (_useJsonFallback) return [];
   const db = getDb();
   return db
-    .select()
+    .select({
+      id: matches.id,
+      leadId: matches.leadId,
+      inventoryId: matches.inventoryId,
+      matchScore: matches.matchScore,
+      matchReason: matches.matchReason,
+      status: matches.status,
+      notificationSentAt: matches.notificationSentAt,
+      notificationMethod: matches.notificationMethod,
+      customerContactedAt: matches.customerContactedAt,
+      contactNotes: matches.contactNotes,
+      outcome: matches.outcome,
+      dismissReason: matches.dismissReason,
+      lastMatchedPrice: matches.lastMatchedPrice,
+      createdAt: matches.createdAt,
+      updatedAt: matches.updatedAt,
+      inventoryYear: inventory.year,
+      inventoryMake: inventory.make,
+      inventoryModel: inventory.model,
+      inventoryPrice: inventory.price,
+    })
     .from(matches)
+    .leftJoin(inventory, eq(matches.inventoryId, inventory.id))
     .where(eq(matches.leadId, leadId))
     .orderBy(desc(matches.createdAt));
 }

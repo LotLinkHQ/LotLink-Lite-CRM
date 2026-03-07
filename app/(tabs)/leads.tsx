@@ -242,7 +242,7 @@ export default function LeadsScreen() {
     data: leadsData, isLoading, refetch,
     fetchNextPage, hasNextPage, isFetchingNextPage,
   } = trpc.leads.list.useInfiniteQuery(
-    { limit: 20 },
+    { limit: 25, status: statusFilter || undefined },
     { enabled: isAuthenticated, getNextPageParam: (p) => p.nextCursor }
   );
 
@@ -495,13 +495,11 @@ export default function LeadsScreen() {
   };
 
   const filtered = leads.filter(l => {
+    if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
-    const matchesSearch = !q ||
-      l.customerName.toLowerCase().includes(q) ||
+    return l.customerName.toLowerCase().includes(q) ||
       (l.customerPhone || "").toLowerCase().includes(q) ||
       (l.customerEmail || "").toLowerCase().includes(q);
-    const matchesStatus = !statusFilter || l.status === statusFilter;
-    return matchesSearch && matchesStatus;
   });
 
   if (!isAuthenticated) {
@@ -608,7 +606,10 @@ export default function LeadsScreen() {
 
       {/* Count */}
       <View style={s.sectionLabel}>
-        <Text style={s.sectionLabelText}>{filtered.length} Lead{filtered.length !== 1 ? "s" : ""}</Text>
+        <Text style={s.sectionLabelText}>
+          {filtered.length} Lead{filtered.length !== 1 ? "s" : ""}
+          {hasNextPage ? " (scroll for more)" : ""}
+        </Text>
       </View>
 
       {/* List */}
@@ -639,13 +640,22 @@ export default function LeadsScreen() {
               onDelete={() => handleDeleteLead(item.id, item.customerName)}
             />
           )}
-          ListFooterComponent={() =>
-            isFetchingNextPage ? (
-              <View style={{ paddingVertical: 20 }}>
+          ListFooterComponent={() => (
+            <View style={{ paddingVertical: 16, alignItems: "center" }}>
+              {isFetchingNextPage ? (
                 <ActivityIndicator color={C.teal} />
-              </View>
-            ) : null
-          }
+              ) : hasNextPage ? (
+                <TouchableOpacity
+                  onPress={() => fetchNextPage()}
+                  style={{ backgroundColor: C.teal, borderRadius: 8, paddingHorizontal: 24, paddingVertical: 10 }}
+                >
+                  <Text style={{ color: C.white, fontWeight: "700" }}>Load More Leads</Text>
+                </TouchableOpacity>
+              ) : leads.length > 20 ? (
+                <Text style={{ color: C.muted, fontSize: 13 }}>All {leads.length} leads loaded</Text>
+              ) : null}
+            </View>
+          )}
         />
       )}
 

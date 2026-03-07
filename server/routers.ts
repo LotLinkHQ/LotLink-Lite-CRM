@@ -554,12 +554,13 @@ export const appRouter = router({
         z.object({
           cursor: z.number().nullish(),
           limit: z.number().min(1).max(100).default(50),
+          status: z.string().optional(),
         })
       )
       .query(async ({ ctx, input }) => {
         const limit = input.limit ?? 50;
         const userId = ctx.user.role === "salesperson" ? ctx.user.id : undefined;
-        const items = await db.getUserLeads(ctx.dealership.id, input.cursor ?? undefined, limit, userId);
+        const items = await db.getUserLeads(ctx.dealership.id, input.cursor ?? undefined, limit, userId, input.status);
         let nextCursor: typeof input.cursor | undefined = undefined;
         if (items.length > limit) {
           const nextItem = items.pop();

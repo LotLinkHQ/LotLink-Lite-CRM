@@ -212,6 +212,26 @@ async function boot() {
   // Seed default data after tables are ready
   await seedDatabase();
 
+  // One-time cleanup: remove duplicate matches and add unique constraint
+  try {
+    const database = getDb();
+    await database.execute(sql`
+      DELETE FROM matches WHERE id NOT IN (
+        SELECT MIN(id) FROM matches GROUP BY lead_id, inventory_id
+      )
+    `);
+    await database.execute(sql`
+      DO $$ BEGIN
+        ALTER TABLE matches ADD CONSTRAINT unique_lead_inventory UNIQUE (lead_id, inventory_id);
+      EXCEPTION WHEN duplicate_table THEN NULL;
+               WHEN duplicate_object THEN NULL;
+      END $$
+    `);
+    console.log("[DB] Match dedup complete");
+  } catch (e: any) {
+    console.warn("[DB] Match cleanup:", e.message);
+  }
+
   // Import Poulsbo RV inventory if JSON exists and DB is empty
   try {
     const database = getDb();
